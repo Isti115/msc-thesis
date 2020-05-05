@@ -1,0 +1,32 @@
+\section{Type Theory}
+In the following section we will discuss what Type Theory is, how it enables formalization of proofs, to be checked by computers and explain our choice of the Agda implementation.
+
+\subsection{General Principles Overview}
+Type theory , alternative to set theory
+
+Curry-Howard isomorphism, types as statements, instances as proofs
+(This is due to the so called \textit{"propositions-as-types"} paradigm, formally known as the Curry–Howard correspondence.)
+
+\subsection{Implementations}
+There are several existing programming languages that implement type theory, thus are capable of describing theorems and constructing proofs for them using dependent types. Out of these we tried out the three most popular alternatives.
+
+\subsubsection{Idris}
+Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edvin Brady with the aim of creating a general purpose language.
+
+We first tried implementing our formalisation in Idris, as it seemed to be the freshest language. It also has good support for Windows, better editor compatibility than the alternatives and a more modern standard library, which is easier to discover due to the ?in our opinion better documentation?.
+
+?Idris also has heterogeneous vectors which are harder to create in Agda due to its implementation of universe polymorphism.?
+
+We found the implicit argument handling of Idris to be more convenient as well, as it allows the specification of implicit parameter values by their name for example. This can be done in Agda as well, just in a more convoluted way.
+
+After reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages.
+
+Its lack of Unicode support is well reasoned and understandable, but also makes the code a lot more verbose and harder to integrate with the original notation.
+
+\subsubsection{Agda}
+Agda is a dependently typed programming language that was originally described in the PhD thesis of Ulf Norell\cite{norell:thesis} and later completely rewritten for a second version. It mainly follows the style of Haskell.
+
+Its conventions of highly relying on Unicode symbols for identifiers helped in staying similar to the original curriculum / material / notes of the subject.
+
+\subsubsection{Coq}
+Coq is the earliest of the three, even predating Agda by ten years. (The initial version was released on the 1st of May, 1989.) It is really well established and focuses mainly on creating proofs using a tactic language instead of using regular functional programming constructs.

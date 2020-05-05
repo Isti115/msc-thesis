@@ -1,0 +1,28 @@
+\chapter{Introduction}
+
+Software plays a critically important role in the life of modern societies. More or less everybody interacts with computer programs on countless occasions during our everyday lives, most of the time probably not even noticing. For example, just paying with a credit card while shopping, being able to call someone with our mobile phones, or even just as mundane tasks, as operating modern versions of basic home appliances, like washing machines or microwave ovens requires interaction with software.
+
+% https://youtu.be/ecIWPzGEbFc?t=4253
+
+During the COVID-19 pandemic in the spring of 2020 we also became more aware of how much we are relying on software for online communication to be able to do our work remotely and keep in touch with friends and family. Many of us have experienced during these times how frustrating it can be, when programs do not work as intended.
+
+All these examples are mostly just about convenience factors, but if we take the amount of more critical scenarios into account, such as for example software running on the computer system of an airplane, or even keeping a nuclear power plant safe, we can see that programmers have an even bigger impact. (Self driving cars could also be mentioned, but machine learning is a whole another field with its own set of ethical and moral questions.) The economy of the world depends on software, the rulers of nations rely on computer systems at their disposals. To quote from a 2016 talk given by famous American software engineer, Robert C. Martin, titled "The Future of Programming", he claimed: \textit{"Civilization depends on us."} and even went as far as to say that:
+
+% 1:14:27
+\textit{``We rule the world. The world doesn't know this yet. We don't quite know it yet. Other people believe that they rule the world, but they write the rules down and they hand them to us, and then we write the rules that go into the machines that execute everything that happens on this planet nowadays. No law can be enacted without software, no law can be enforced without software. No government can act without software, we rule the world.''}
+
+I wouldn't make such an extreme claim, that developers rule the world, but I certainly agree that they play a significantly role that comes with high responsibilities.
+
+\section{Motivation}
+
+Borrowing from the same talk, we can define the beginning of programming around the work of Alan Turing, since he was the first one, who wrote code for machines in the sense that we would recognize today. His work has undoubtedly played a crucial role in laying down the foundations of programming. Turing machines are a core part of computer science and are still taught in university courses today. In his time, he described the future possibilities of his vision with the following sentences:
+% https://youtu.be/ecIWPzGEbFc?t=1350
+
+``In order to supply the machine with these problems we shall need a great number of mathematicians of ability. These mathematicians will be needed in order to do the preliminary research on the problems, putting them into a form for computation.''
+
+He stated the need for mathematicians for the precise formalization of problems. This need has since been abandoned and most of software products nowadays are just developed through trial and error processes, being patched until they pass all defined test cases, but nobody can really be assured of their correct behavior. For some types of applications, such as for example games this can be acceptable, because the worst outcome of bugs are frustrated end users, but for more critical systems, the correctness of which can decide between life and death, that is simply not enough. We need to have formal strategies to verify behaviors of programs under all circumstances instead of just observing them for the most likely situations.
+
+There are lots of existing means for confirming the adherence of simple sequential programs to their specifications, ranging from formal verification procedures carried out on paper to contracts built into programming languages, that can be checked and enforced automatically, either via static code analysis, or during runtime by monitoring different values. Also, several different ways are known to approach formal proofs of correctness for concurrent programs. For example multiple specific methods can be seen in \cite{hons_1202}. What we chose to base our research on is the material of the subject titled \textit{"Specification and Implementation of Distributed Systems"} which is discussed in more detail Section \ref{sec:subject}.
+%builds upon Hoare Logic \cite{hoare-logic} and the work of \cite{Lamport1980}.
+
+Our formalisation of does not follow the material exactly, but we tried to stay as close to the original notation as possible, as we also have intentions to later further expand this project to cater for educational usage for example as part of the practical courses. We consider this to be a valuable opportunity for creating a teaching tool that can greatly aid the understanding of the subject for students. The use of proof assistants have already been successfully introduced in several other classes\cite{formalsemantics-typesystems}, which helps making this idea seem quite feasible.

@@ -1,0 +1,31 @@
+\section{Subject: Specification and Implementation of Distributed Systems}
+\label{sec:subject}
+
+The subject of our formalisation is a part of the material from the \textit{Specification and Implementation of Distributed System} course taught at ELTE. The main goal was following the official notes of the subject\cite{hz-orsi} as closely as possible, but since the code needed to be more precise than written definitions, some constructs were altered. The system extends a relational model defined in \cite{fothi-prog} which itself is built upon Hoare-logic \cite{hoare1978proof}\cite{hoare-logic}, more specifically concurrent Hoare-logic\cite{Lamport1980}. Proofs for sequential programs are handled using pre- and postconditions with the devices provided by first order logic. This is expanded to parallel execution in a similar fashion to UNITY. Abstract programs are formalized through a set of conditional assignments the execution of which are represented as a list of state transitions that can be considered as trees, which results in a branching-time temporal logic \cite{emerson1988branching} (more specifically computation tree logic) like system.
+
+An abstract program as defined by this system can be thought of as an initialization and a set of further conditional instructions. These are then selected randomly and if their condition is satisfied in the current program state, they are executed. This can be done in any arbitrary order, their behaviour stays the same if the scheduling is impartial.
+
+After laying down the foundation for constructing programs and reasoning about their behavior, the subject introduces a formal concept of task specification and then defines the correctness of a program by proving that it adheres to those constraints posed by the specification. We iterate on these constructions and implement them, so the verification of the adherence can be done on the computer, thus avoiding potential human errors that can occur while carrying out such a process on paper.
+
+There are multiple ways, in which said correctness of a program can be shown. Simply giving a proof, that all the imposed criteria are held is always sufficient, but gets inconvenient for larger programs. To avoid the complication of proofs, one can utilize the method of reduction to an already known problem. If there is a recurring pattern, general statements about its behavior can be proven, so that these do not need to be done each and every time the pattern is used. Just showing how the currently examined part of the program corresponds to the pattern is enough instead. Another technique for avoiding repetition and introducing segmentation into proofs to keep their brevity is to construct programs from other smaller programs, by for example taking their union, essentially using them as so called \textit{building blocks}.
+
+\subsubsection{Mathematical foundation}
+
+The relational model
+finite, infinite lists of states
+state transition function
+logical function = condition
+
+
+\begin{definition}{Interleaving semantics}
+\label{def:interleaving-semantics}
+In a model that conforms to interleaving semantics, for every valid parallel execution, there also exists a linear execution path of the same instructions, that achieve equivalent results.
+\end{definition}
+
+\begin{definition}{Impartial Scheduling}
+\label{def:impartial-scheduling}
+A scheduling is called impartial if it ensures that running the program indefinitely will result in the selection of each and every conditional instruction infinitely many times.
+\end{definition}
+
+The execution units can be thought of as processing cores, or even several computers working together in a cluster.
+
