@@ -1,32 +1,31 @@
 \section{Type Theory}
-In the following section we will discuss what Type Theory is, how it enables formalization of proofs, to be checked by computers and explain our choice of the Agda implementation.
+In the following section we will discuss what Type Theory is, how it enables formalization of models with proofs, to be checked by computers and explain our choice of the Agda implementation.
 
 \subsection{General Principles Overview}
-Type theory , alternative to set theory
 
-Curry-Howard isomorphism, types as statements, instances as proofs
-(This is due to the so called \textit{"propositions-as-types"} paradigm, formally known as the Curry–Howard correspondence.)
+Type theory is an alternative foundation for mathematics, which enables the formalization of constructive proofs through the connections to intuitionistic logic given by the Brouwer–Heyting–Kolmogorov interpretation. After formalizing a model by defining its types and their elements, one can express statements and theorems in forms of new types, the instances of which can be thought as of proofs for them.
+This is due to the so called \textit{"propositions-as-types"} paradigm, formally known as the Curry–Howard isomorphism.
+
+As an example, given two statements, $A$ and $B$, the function with the type signature $A \to B$ represents the theorem which claims that every proof of $A$ can be mapped to a proof for $B$, thus $A$ ensures $B$. If an implementation for a function with said type is given, the theorem can be considered the be proven, since if we are in possession of a proof for $A$, we can execute it and obtain a proof for $B$. The fact that it does not only claim, that such an instance exists, but gives one right away instead is called a constructive proof.
 
 \subsection{Implementations}
-There are several existing programming languages that implement type theory, thus are capable of describing theorems and constructing proofs for them using dependent types. Out of these we tried out the three most popular alternatives.
+There are several existing programming languages that implement type theories, thus are capable of describing theorems and constructing proofs for them. They achieve this using dependent typesystems, in which types can not only be parametrized over other types, but also values. Out of these we tried out the three most popular alternatives.
 
 \subsubsection{Idris}
 Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edvin Brady with the aim of creating a general purpose language.
 
-We first tried implementing our formalisation in Idris, as it seemed to be the freshest language. It also has good support for Windows, better editor compatibility than the alternatives and a more modern standard library, which is easier to discover due to the ?in our opinion better documentation?.
+We first tried implementing our formalisation in Idris, as it seemed to be the freshest language. It also has good support for every major operating system, wider editor compatibility than the alternatives and in some sense a more modern standard library, which is easier to discover due to the in our opinion better documentation.
 
-?Idris also has heterogeneous vectors which are harder to create in Agda due to its implementation of universe polymorphism.?
+Under certain circumstances the implicit parameter handling of Idris seemed to better for us than that of Agda, and there are constructs, such as for example heterogeneous vectors that are easier to implement in Idris, because it uses cumulative universes, but
+after reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages. It also lacks Unicode support, with perfectly valid and understandable reasons outlined by Edvin Brady, but it also makes the code a lot more verbose and harder to integrate with the original notation.
 
-We found the implicit argument handling of Idris to be more convenient as well, as it allows the specification of implicit parameter values by their name for example. This can be done in Agda as well, just in a more convoluted way.
+% ?Idris also has heterogeneous vectors which are harder to create in Agda due to its implementation of universe polymorphism.?
 
-After reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages.
-
-Its lack of Unicode support is well reasoned and understandable, but also makes the code a lot more verbose and harder to integrate with the original notation.
 
 \subsubsection{Agda}
 Agda is a dependently typed programming language that was originally described in the PhD thesis of Ulf Norell\cite{norell:thesis} and later completely rewritten for a second version. It mainly follows the style of Haskell.
 
-Its conventions of highly relying on Unicode symbols for identifiers helped in staying similar to the original curriculum / material / notes of the subject.
+Its conventions of highly relying on Unicode symbols for identifiers helped in staying similar to the original notation of the curriculum of the subject.
 
 \subsubsection{Coq}
-Coq is the earliest of the three, even predating Agda by ten years. (The initial version was released on the 1st of May, 1989.) It is really well established and focuses mainly on creating proofs using a tactic language instead of using regular functional programming constructs.
+The Coq proof assistant\cite{} is the earliest of the three, even predating Agda by ten years. (The initial version was released on the 1st of May, 1989.) It is really well established and focuses mainly on creating proofs using a tactic language instead of using regular functional programming constructs.
