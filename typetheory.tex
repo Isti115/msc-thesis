@@ -176,41 +176,52 @@ These previous definitions together can be used to describe a property of natura
 
 As a few examples on how to utilize these constructors, here we present the proofs for some known constant even numbers. Notice, that in the proof for six, we utilize the proof of two. This ability to reuse smaller parts greatly helps in the construction of bigger proofs.
 
-\begin{code}
-    \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
-    \AgdaSymbol{:}\AgdaSpace{}%
-    \AgdaDatatype{Even}\AgdaSpace{}%
-    \AgdaInductiveConstructor{zero}\<%
-    \\
-    \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
-    \AgdaSymbol{=}\AgdaSpace{}%
-    \AgdaInductiveConstructor{even-0}\<%
-    \\
-    %
-    \\[\AgdaEmptyExtraSkip]%
-    \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
-    \AgdaSymbol{:}\AgdaSpace{}%
-    \AgdaDatatype{Even}\AgdaSpace{}%
-    \AgdaFunction{two}\<%
-    \\
-    \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
-    \AgdaSymbol{=}\AgdaSpace{}%
-    \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
-    \AgdaInductiveConstructor{even-0}\<%
-    \\
-    %
-    \\[\AgdaEmptyExtraSkip]%
-    \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
-    \AgdaSymbol{:}\AgdaSpace{}%
-    \AgdaDatatype{Even}\AgdaSpace{}%
-    \AgdaFunction{six}\<%
-    \\
-    \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
-    \AgdaSymbol{=}\AgdaSpace{}%
-    \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
-    \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
-    \AgdaSymbol{(}\AgdaFunction{even-two}\AgdaSymbol{))}\<%
-\end{code}
+\setlength{\savedcolumnsep}{\columnsep}
+\setlength{\columnsep}{-2.5cm}
+\begin{multicols}{2}[]
+    \begin{code}
+        \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Even}\AgdaSpace{}%
+        \AgdaInductiveConstructor{zero}\<%
+        \\
+        \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{even-0}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Even}\AgdaSpace{}%
+        \AgdaFunction{two}\<%
+        \\
+        \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+        \AgdaInductiveConstructor{even-0}\<%
+    \end{code}
+        % \\
+        % %
+        % \\[\AgdaEmptyExtraSkip]%
+    \begin{code}
+        % \\[\AgdaEmptyExtraSkip]%
+        % \\[\AgdaEmptyExtraSkip]%
+        \\[\AgdaEmptyExtraSkip]%
+        \\[\AgdaEmptyExtraSkip]%
+        \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Even}\AgdaSpace{}%
+        \AgdaFunction{six}\<%
+        \\
+        \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{even-two}\AgdaSymbol{))}\<%
+    \end{code}
+\end{multicols}
+\setlength{\columnsep}{\savedcolumnsep}
 
 We also show the implementations with some examples for a few of the usual logical expressions, such as the disjunction. It has two constructors, since it can be proven by showing that either the left or the right side statement holds.
 

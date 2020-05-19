@@ -19,23 +19,46 @@ After laying down the foundation for constructing programs and reasoning about t
 
 There are multiple ways, in which said correctness of a program can be shown. Simply giving a proof, that all the imposed criteria are held is always sufficient, but gets inconvenient for larger programs. To avoid the complication of proofs, one can utilize the method of reduction to an already known problem. If there is a recurring pattern, general statements about its behavior can be proven, so that these do not need to be done each and every time the pattern is used. Just showing how the currently examined part of the program corresponds to the pattern is enough instead. Another technique for avoiding repetition and introducing segmentation into proofs to keep their brevity is to construct programs from other smaller programs, by for example taking their union, essentially using them as so called \textit{building blocks}.
 
-\subsubsection{Mathematical foundation}
+\subsection[Mathematical foundation]{Mathematical foundation\protect\footnote{The original model is more general than the one described here, but since our formalization uses functions, that are deterministic, we constrained the ranges of some relations to single values instead of sets.}}
 
 The basics of the material are built on top of a relational model, the development of which originates from the works of Ákos Fóthi\cite{fothi1988mathematical}. This model deals with programs, that operate over a so called \textbf{state space}, which is built as a Cartesian product of the individual sets of possible values for the variables of the program: $A = A_1 \times A_2 \times \ldots \times A_n$. These sets are individually called \textbf{type value sets}. The value of a single variable in a certain state can be accessed by the projection function $v_i : A \to A_i$.
 
 Let $A^*$ denote the finite and $A^\infty$ the infinite sequences made of elements in $A$. The set of all sequences with elements from $A$, that can either be finite or infinite is defined as $A^{**} = A^* \cup A^\infty$.
 
-We call a function logical function, if it maps into the set of Boolean logical values defined as $\mathbb{B} = {true , false}$. A subset of these functions, that not only have $\mathbb{B}$ as their range, but also a state space $A$ as their domain can be called conditions. These have the type $C : A \to \mathbb{B}$.
+We call a function a \textit{logical function}, if it maps into the set of Boolean logical values defined as $\mathbb{B} = {true , false}$. A subset of these functions, that not only have $\mathbb{B}$ as their range, but also a state space $A$ as their domain can be called conditions. These have the type $\pi : A \to \mathbb{B}$.
 
 \begin{definition}{Truth set}
 \label{def:truth-set}
-The subset of the state space in which these conditions are satisfied is often of interest, for this purpose the notion of the \textbf{truth set} of a function is defined as the subset of its domain that it maps to $true$. It is denoted as follows: $\lceil C \rceil = \{a \in A \;|\; C(a) = true\}$
+The subset of the state space in which these conditions are satisfied is often of interest, for this purpose the notion of the \textbf{truth set} of a function is defined as the subset of its domain that it maps to $true$. It is denoted as follows: $\lceil \pi \rceil = \{a \in A \;|\; \pi(a) = true\}$
 \end{definition}
 
 \begin{definition}{Implication}
 \label{def:implication}
-One condition implies another ($P \Rightarrow Q$) if its truth set is subset of the others ($\lceil P \rceil \subset \lceil Q \rceil$).
+One condition is said to imply another ($P \Rightarrow Q$) if its truth set is subset of the others ($\lceil P \rceil \subset \lceil Q \rceil$).
 \end{definition}
+
+Another specific kind of function that operates on states is the so called \textbf{state transition function}. It has the type signature of $A \to A$ and is used to describe the behavior of an instruction. In this model, we consider only a single kind of instruction, namely a generic type of assignment, which is defined in the following way. Given a function for every variable index of the state space, that maps from the entire state space to the type value set of that given variable ($\forall i \in \{1..n\} : F_i : A \to A_i$), combining these into a single function $F = (F_1, \ldots F_n)$ we get a state transition function. Semantically speaking, it describes a parallel assignment, where each variable can have a formula, that may depend on all the other variables (or itself as well), these then are evaluated in the same state and get their new values assigned concurrently to produce a new, updated state.
+
+Such an assignment can be made conditional by pairing it with a logical function. By doing so, we alter its state transition function in a way, that it only applies the changes to the state, if its condition is fulfilled (meaning, that the current state is in its truth set), otherwise it acts as an identity function. With mathematical notation, given $\pi : A \to \mathbb{B}$ as a condition and $F : A -> A$ as an assignment, we get the following conditional state transition function:
+
+\begin{equation}
+    F'(a) = 
+    \left\{
+    	\begin{array}{ll}
+    		F(a) & \mbox{if } a \in \lceil \pi \rceil \\
+    		a & \mbox{otherwise}
+    	\end{array}
+    \right.
+\end{equation}
+
+A parallel program ($S = (s_0, \{s_1, \ldots, s_m\})$) defined using these constructs consists of a single initialization assignment and a set of conditional assignments to be repeatedly performed later in no particular order. Any requirements that would be posed for their sequentiality need to be encoded into their conditions, which in turn can ensure some sort of a control flow. A parallel program constructed in a such a way can be semantically thought of as a relation that maps any state to a branching series of possible successive states (see Figure \ref{fig:branching-execution} as an illustration). If we remove the successively duplicated states from these series by replacing all consecutive repetitions of a single state with only one instance, we get their so-called \textit{reduced} versions. This gives us the type signature $A \times A^{**}$, meaning that for any given state, the program determines the set of possible execution paths, which are either finite (if a program terminates by reaching a fixed point) or infinite (that might represent a continuously running server) series of states.
+
+\begin{figure}[H]
+    \centering
+    \input{branching-execution.tex}
+    \caption{Branching execution with possible paths, e.g., $(a_0,a_2,a_9,a_{15})$, $(a_0,a_1,a_5,a_{12},...)$.}
+    \label{fig:branching-execution}
+\end{figure}
 
 By constructing a type of specification that only places constraints on states, we can achieve independence from the actual structure of programs operating on these states. Problems consist of seven so called \textit{Specification Properties}, which are themselves given as relations over the power set of the state space. These provide constraints for the behavior of the program, that will eventually have to satisfy all of them to be considered adherent to the specification and thus solve the problem.
 
@@ -72,17 +95,11 @@ The transitive disjunctive closure of a relation $R \subset (A \times A)$, where
 \end{itemize}
 \end{definition}
 
-A tuple with seven items, each describing elements from one of the relations given above, can be considered as a specification for a program.
+A tuple with seven items, each describing elements from one of the relations given above, can be considered as a specification for a program. If a parallel program satisfies all the constraints posed by a specification, it is considered to be a solution for the given problem.
 
-A program for solving problems defined by such specifications can be constructed as a set of conditional assignments. A generic conditional assignment is defined as a function that maps states to states. Its behavior can be defined as a function that checks whether a certain requirement is satisfied in the current state, and if it is, then it assigns new values to the variables of the state space.
-
-A parallel program consists of a single initialization assignment and a set of conditional assignments to be performed later.
-
-If a parallel program satisfies all the constraints posed by a specification, it is considered to be a program that solves the given problem.
+% A program for solving problems defined by such specifications can be constructed as a set of conditional assignments. A generic conditional assignment is defined as a function that maps states to states. Its behavior can be defined as a function that checks whether a certain requirement is satisfied in the current state, and if it is, then it assigns new values to the variables of the state space.
 
 % TODO: Lamsweerde Sintzoff
-
-% A different kind of function that operates on states is the so called \textbf{state transition function}. This has the type signature $A \to A$. TODO: Fix this sentence
 
 
 %% Behavior relation

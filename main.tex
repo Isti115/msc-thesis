@@ -177,6 +177,10 @@
 
 \usepackage{multicol}
 
+\usepackage{tikz}
+% \usepackage{forest}
+\usepackage{float}
+
 \usepackage{fontspec,unicode-math}
 % \setmainfont{XITS}
 % \setmonofont{XITS Mono}
@@ -249,6 +253,8 @@ BoldItalicFont=DejaVu Sans Mono Bold Oblique Nerd Font Complete Mono.ttf
 
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
+
+\newlength{\savedcolumnsep}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Body section of Latex document %%
@@ -356,8 +362,11 @@ BoldItalicFont=DejaVu Sans Mono Bold Oblique Nerd Font Complete Mono.ttf
 \input{conclusions.tex}
 
 \chapter{Acknowledgements}
-\section{EFOP}
 
+\section{Personal}
+{\Large I would like to express my gratitude towards my two supervisors, namely Melinda Tóth and Ambrus Kaposi, who have both motivated me towards this project, provided the necessary background knowledge and were available when I was asking for advice, even under unusual cirscumstances.}
+
+\section{EFOP}
 {\Large The author was supported by the European Union, co-financed by the European Social Fund (EFOP-3.6.3-VEKOP-16-2017-00002).}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -388,6 +397,8 @@ BoldItalicFont=DejaVu Sans Mono Bold Oblique Nerd Font Complete Mono.ttf
 %% Appendices starts here %%
 
 % \addtocontents{toc}{\setcounter{tocdepth}{0}}
+% \setcounter{secnumdepth}{3}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \input{appendix.tex}
 \end{document}
 
