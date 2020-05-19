@@ -1,0 +1,1246 @@
+\section{Proofs}
+
+In the second part of this chapter we will present the proofs we built on top of the previously introduced model. There were two kinds of statements that that we could prove in our system. First, there were general theorems, which are true independently and then there are the correctness properties of certain specific programs.
+% , by which we mean the adherence to their specification.
+
+\subsection{Theorems}
+
+We show two proofs, one for a relatively simple lemma, for which simple straightforward reasoning is sufficient, and another one for a more complex theorem, that includes induction.
+
+\subsubsection{Reflexivity of Inevitability ($\hookrightarrow$)}
+
+The lemma states that every predicate inevitably leads to itself. This can be trivially seen intuitively by looking at the definitions and understanding the semantics behind them, but still requires quite a bit of work to write a fully formal proof for. 
+
+First we need to introduce the \textit{NonEmpty} property for programs, since this lemma only holds, if there is at least one conditional batch in a program.
+
+\begin{code}
+    \>[2]\AgdaFunction{NonEmpty}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{NonEmpty}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{¬}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSymbol{)}\<%
+\end{code}
+
+Notice, that the reflexiveness does not only hold for the \textbf{Inevitable ($\hookrightarrow$)} property, but also for the \textbf{Ensures ($\mapsto$)}, \textbf{Progress ($\rightarrowtail$)} and \textbf{Unless ($\rhd$)}. Since this list is laid out in such a way, that the former elements can always be composed from the latter, we should be able to works our way backwards.
+
+First, the reflexivity of Unless is proven using the eliminator of \bot. (Recall from the Agda introduction part at the end of Chapter \ref{chp:background}, that a negation maps to bottom, so if we have proof for a type, for which we have a negation at the same time, we can construct an element of the empty type, which is impossible.) This is a special function, that helps in the definition of branches that contain contradictions. (See section \ref{code:bottom-eliminator} of Appendix \ref{apx:codes} for its definition.) This is quite easy, since by unfolding the definition of Unless, we get a contradiction among the parameters.
+
+\begin{code}
+    \>[2]\AgdaFunction{▷-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSymbol{)}\<%
+\end{code}
+
+As the second step, we prove the reflexivity of Progress. For this step we need the \textit{NonEmpty}-ness as a parameter, since there can be no progress made in an empty program.
+We pattern match on the list of the conditional batches in $S$, we eliminate the branch where it is the empty list, since that contradicts with our hypothesis, that $S$ is \textit{NonEmpty}, and we solve the second branch by getting the contradiction again, this time by the definition of the Progress statement.
+
+\begin{code}
+    \>[2]\AgdaFunction{↣-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{NonEmpty}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↣[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{↣-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaInductiveConstructor{[]}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{nonEmptyS}\AgdaSpace{}%
+    \AgdaInductiveConstructor{refl}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{↣-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{cb}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaBound{cbs}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{here}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝p}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{⌝p}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{\})}\<%
+\end{code}
+
+Since the definition of Ensures is just a Cartesian product of Unless and Progress, we can take the next step by simply combining our previous results.
+
+\begin{code}
+    \>[2]\AgdaFunction{↦-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{NonEmpty}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↦[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{↦-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(}\AgdaFunction{▷-Reflexive}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{↣-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSymbol{))}\<%
+\end{code}
+
+Now, that we have the reflexivity of Ensures, our goal can be directly achieved through a single constructor use, \verb|FromEnsures|, which creates an Inevitability proof in one step.
+
+\begin{code}
+    \>[2]\AgdaFunction{↪-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{NonEmpty}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{↪-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{FromEnsures}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{↦-NonEmpty-Reflexive}\AgdaSpace{}%
+    \AgdaBound{nonEmptyS}\AgdaSymbol{)}\<%
+\end{code}
+    
+\subsubsection{PSP}
+
+Our second example is the most complicated theorem we managed to prove. It was the theorem of "PSP" (see equation \ref{eq:psp}), meaning "Progress-Safety-Progress" (introduced in this form in \cite{Chandy1988ParallelPD}), which states that if from a set of starting points $P$ a program must eventually reach a set of result states $Q$ and the truth set of a given predicate $R$ cannot be left without entering $B$ than in case we begin execution from a shared point of $P$ and $R$ we will either get to a result ($Q$) while staying in $R$ or enter an error state, $B$. We prove several other helpful lemmas first, that facilitated the construction of the bigger proof later.
+
+\begin{equation}
+    \label{eq:psp}
+    \infer{P \land R \hookrightarrow_S (Q \land R) \lor V}{P \hookrightarrow_S Q & R \rhd_S V}
+\end{equation}
+
+% TODO: Figure?
+
+For the construction of this proof we used structural induction. We divided the goal into three parts based on how $P \hookrightarrow_S Q$ was constructed (from an Ensures statement or by one of the transitivity and distributivity rules).
+
+The first goal is then solved by proving that equation \ref{eq:psp-ensures} holds and then reconstructing the goal by using the \verb|FromEnsures| constructor on the results of the lemma. The proof for the lemma can be seen in Section \ref{code:from-ensures} of Appendix \ref{apx:codes}, it is constructed from two inductive parts, on for each of the Unless and the Progress statements that Ensures is made up of. They also use results of previously defined lemmas, the full source code for those is available at our repository\cite{orsi-formalization-github}.
+
+\begin{equation}
+    \label{eq:psp-ensures}
+    \infer{P \land R \mapsto_S (Q \land R) \lor V}{P \mapsto_S Q & R \rhd_S V}
+\end{equation}
+
+\begin{code}
+    \>[2]\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{V}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{V}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{FromEnsures}\AgdaSpace{}%
+    \AgdaBound{ensures}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{FromEnsures}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{pspFromEnsures}\AgdaSpace{}%
+    \AgdaBound{ensures}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{Transitivity}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p↪[s]p₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{p₁↪[s]q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaInductiveConstructor{Transitivity}\AgdaSpace{}%
+    \AgdaSymbol{(}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaSymbol{(}\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p↪[s]p₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[6]\AgdaOperator{\AgdaInductiveConstructor{,}}\<%
+    \\
+    %
+    \>[6]\AgdaInductiveConstructor{Disjunctivity}\AgdaSpace{}%
+    \AgdaSymbol{(}\<%
+    \\
+    \>[6][@{}l@{\AgdaIndent{0}}]%
+    \>[8]\AgdaSymbol{(}\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p₁↪[s]q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaInductiveConstructor{,}}\<%
+    \\
+    %
+    \>[8]\AgdaSymbol{(}\AgdaFunction{↪-NonEmpty-from-⇒}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{↪-NonEmpty}\AgdaSpace{}%
+    \AgdaBound{p↪[s]p₁}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{Disjunctivity}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p₁↪[s]q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{p₂↪[s]q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaFunction{↪-⇐⇒-left}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaSymbol{(}\AgdaFunction{⇐⇒Symmetric}\AgdaSpace{}%
+    \AgdaFunction{andDistributiveRight}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaSymbol{(}\AgdaInductiveConstructor{Disjunctivity}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p₁↪[s]q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaFunction{PSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p₂↪[s]q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r▷[s]v}\AgdaSymbol{)))}\<%
+\end{code}
+
+The second and third subgoals, whose constructors were inductive, can be solved by recursively applying the theorem (as well as a few other lemmas, for some of which the definition can be found in Appendix \ref{apx:codes}) to the now structurally smaller Inevitable relations.
+
+% \begin{code}
+%     \input{code/PSP.tex}
+% \end{code}
+
+
+\subsubsection{Safety property for union of programs}
+
+Another proof we created is regarding the \textbf{Unless} safety property of the union of two programs. The theorem states that the \textbf{Unless} relation for the union is equal to the union of the two separate relations. $\rhd_{S_1 \cup S_2} = \rhd_{S_{1}} \cup \rhd_{S_{2}}$
+
+This equality can be represented in Agda by proving the logical equivalence of two types. One representing the statement $P \rhd_{S_{1} \cup S_{2}} Q$ and the other claiming that $(P \rhd_{S_{1}} Q) \land (P \rhd_{S_{2}} Q)$. This logical equalence can be proven by giving two functions that represent the mapping between the two types in each direction.
+
+First we show that the conjunction of the two statements in the individual programs imply the relation for their union. This is done by pattern matching on the first program. If the first program ($S_{1}$) is empty, we can simply just return the proof of the second one ($\rhd_{S_{2}}$), if it is not, then we need to recursively reconstruct the proofs for the elements of it to be appended to the proofs for the second program. This can be achieved by gaining the parameters ($p , \neg q$) from the definition of the \textbf{Unless} relation of the union and passing them on to the proof function of the first program ($\rhd_{S_{1}}$) that we also received as an argument.
+
+\begin{code}
+    \>[2]\AgdaFunction{▷-Union-to}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∪}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-to}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{▷s₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{▷s₂}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{▷s₂}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-to}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{▷s₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{▷s₂}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaBound{▷s₁}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-to}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{▷s₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{▷s₂}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaBound{px}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaBound{px}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaFunction{▷-Union-to}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{lessUnless}\AgdaSpace{}%
+    \AgdaBound{▷s₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{▷s₂}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\<%
+\end{code}
+
+The first part of the other direction provides the left side of the conjunciton. If $S_{1}$ is empty, then it needs no proofs, otherwise it can be recursively extracted and rebuilt from the proof of the union in a similar way as it was shown previously.
+
+\begin{code}
+    \>[2]\AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∪}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{const}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaBound{px}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaBound{px}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{lessUnless}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\<%
+\end{code}
+
+The second part of the other direction can be achieved by essentially step by step recursively getting rid of the unnecessary proofs included for the first program. If $S_{1}$ is empty, then there is nothing to get rid of.
+
+\begin{code}
+    \>[2]\AgdaFunction{▷-Union-from-2}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∪}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-from-2}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{▷u}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union-from-2}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{S₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{▷-Union-from-2}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{lessUnless}\AgdaSpace{}%
+    \AgdaBound{▷u}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\<%
+\end{code}
+
+At last, we just need to combine our previous results and we get a full proof for the stated theorem.
+
+\begin{code}
+    \>[2]\AgdaFunction{▷-Union}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∪}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↔}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S₂}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-Union}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaFunction{▷-Union-from-1}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{▷-Union-from-2}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSymbol{)))}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaFunction{▷-Union-to}\<%
+\end{code}
+
+\subsection{Correctness}
+
+We have also formalized proofs for a few properties of the concurrent bubble sort algorithm introduced in the previous section (see Subsection \ref{subsec:parallel-bubble-sort}).
+% $in the language, but were so far only able to prove a few properties of it, not the full correctness yet.
+
+\subsubsection{First element}
+
+% We set out to implement bubble sort, which we achieved, but until now we only
+As a quick example we managed to prove that if the first element of the array is one, it can later only change to zero. Using mathematical notation it can be expressed as seen in Equation \ref{eq:bubble-proof-1}. (Where $a$ refers to the first variable in the environment that we defined for the program.)
+
+\begin{equation}
+    \label{eq:bubble-proof-1}
+    a[0] = 1 \rhd_{BubbleSort_n} a[0] = 0
+\end{equation}
+
+The formalized versions of the predicates we need for the proof are illustrated below.
+% Remeber, that the environment that we defined for this program only contains one variable. That is referred to
+
+\begin{code}
+    \>[0]\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    \>[0]\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{EQ}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaNumber{0}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaNumber{1}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{After}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    \>[0]\AgdaFunction{After}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{EQ}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaNumber{0}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaNumber{0}\AgdaSymbol{)}\<%
+\end{code}
+
+\newpage
+
+First we introduce a lemma stating that no number of the form \verb|(suc _)| can be smaller than $1$.
+
+\begin{code}
+    \>[0]\AgdaFunction{h1}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{<}}\AgdaSpace{}%
+    \AgdaNumber{1}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{⊥}\<%
+    \\
+    \>[0]\AgdaFunction{h1}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{s≤s}\AgdaSpace{}%
+    \AgdaSymbol{())}\<%
+\end{code}
+
+After that we prove that the first instruction complies with the specification if its predicate is satisfied. (Notice, that it is the only instruction that can alter the value of the first element in the array.)
+To do so, we separate two cases by pattern matching on the value of the second element. If it is zero, then it is indeed smaller, so the instruction will exchange them and the \verb|After| predicate, and thus the disjuction will be satisfied. In case it is not zero, we have a contradiction, since we assumed that it was smaller than one, but no natural number other then $0$ can be smaller than one. (As we have already proven in \verb|h1|.)
+
+\begin{code}
+    \>[0]\AgdaFunction{helper}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaNumber{0}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaNumber{0}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaField{proj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaNumber{1}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{ownRefl}\AgdaSpace{}%
+    \AgdaInductiveConstructor{refl}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{ownRefl}\AgdaSpace{}%
+    \AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
+    \AgdaKeyword{rewrite}\AgdaSpace{}%
+    \AgdaBound{before}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{h1}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSymbol{)}\<%
+\end{code}
+
+Since the first instruction was the only one that could potentially change the first element, we can generalize the proof to all the instructions by calling the \verb|helper| for the first one and stating that the \verb|Before| predicate cannot be broken by any of the other instructions, a claim which Agda can check and automatically verify for us.
+
+\begin{code}
+    \>[0]\AgdaFunction{helper-n}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{helper-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\<%
+    \\
+    \>[0]\AgdaFunction{helper-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{after}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{gt}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{before}\<%
+\end{code}
+
+We can now build a function that recursively assembles the proof for all the instructions together.
+
+\begin{code}
+    \>[0]\AgdaFunction{all-helper}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaSymbol{(}\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{il}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(\{}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{State}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{il}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧il}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaFunction{After}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{bubbleSort}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{))}\<%
+    \\
+    \>[0]\AgdaFunction{all-helper}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\<%
+    \\
+    \>[0]\AgdaFunction{all-helper}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{((λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{helper-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaFunction{all-helper}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+\end{code}
+
+Finally the \texttt{$\rhd$-proof} auxiliary function is used to construct the proof for our initial statement. (See Appendix \ref{apx:codes}, more specifically Section \ref{code:unless-proof} for its implementation.)
+
+\begin{code}
+    \>[0]\AgdaFunction{test-n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Before}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaFunction{bubbleSort}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaFunction{After}\<%
+    \\
+    \>[0]\AgdaFunction{test-n}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{▷-proof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaFunction{Before}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaFunction{After}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{all-helper}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+\end{code}
+
+% \end{multlined}
+% \end{equation}
+
+\subsubsection{Ordered result in fixpoint}
+
+As a more meaningful proof, we verified that if the program reaches a fixpoint, its results are indeed in order. (Note, that this does not necessarily mean, that it is correct, for that we would also need to prove that all the elements are preserved. That should be doable as well, since the only operation done on the elements is swapping two of them, which does not remove any of them, nor does it add any new ones.)
+
+To express this property we introduced the parametric \verb|Ordered| predicate. Given a number $n$ it generates a predicate that claims that the first $n + 1$ elements of the array found at the first variable of the environment is in ascending order by stating that for each pair the one with the lower index is smaller or equal. Its mathematical notation can be seen in Equation \ref{eq:ordered}, followed by its formalized representation in Agda.
+
+\begin{equation}
+  \label{eq:ordered}
+  Ordered(n) = \forall i \in \{1..n\} : a[i] \leq a[i + 1]
+\end{equation}
+
+\begin{code}
+    \>[0]\AgdaFunction{Ordered'}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    \>[0]\AgdaFunction{Ordered'}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{LTE}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{Ordered}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    \>[0]\AgdaFunction{Ordered}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{TRUE}\<%
+    \\
+    \>[0]\AgdaFunction{Ordered}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Ordered'}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Ordered}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+\end{code}
+
+Using that, the statement we would like to prove can be expressed as seen in Equation \ref{eq:fixpoint-ordered}.
+\begin{equation}
+  \label{eq:fixpoint-ordered}
+  \forall st \in State : Fixpoint_{S}(st) \to Ordered(n)(st)
+\end{equation}
+
+We first introduce a lemma with the following claim. If the value of an element in the array stays the same after swapping it with the following element, their values must be equal.
+This can be proven by pattern matching on the values that introduce branching in the underlying semantics, eliminating (or when possible, omitting) the impossible or conflicting brances and through this process coming to the conclusion that our initial hypothesis is essentially equivalent to our goal.
+
+\begin{code}
+    \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaField{proj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaField{proj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧e}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧e}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\<%
+    \\
+    \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{Data.Nat.≟}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{Data.Nat.≟}}\AgdaSpace{}%
+    \AgdaBound{n}\<%
+    \\
+    \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{yes}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{eq}\<%
+    \\
+    \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p₁}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{¬p₁}\AgdaSpace{}%
+    \AgdaInductiveConstructor{refl}\AgdaSymbol{)}\<%
+\end{code}
+
+Our next lemma transforms the results from the previous one using a congruence on the states.
+
+\begin{code}
+    \>[0]\AgdaFunction{rp-h5}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧e}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧e}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\<%
+    \\
+    \>[0]\AgdaFunction{rp-h5}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{rp-h4}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{cong}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{z}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaField{proj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{z}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSymbol{)}\<%
+\end{code}
+
+It keeps the same outcome, but now it implies it from the hypothesis, which claims that in a certain state the instructions make no changes. This directly leads into the proof for the correct order of a single pair, which can be constructed with the help of an auxiliary function (\verb|cb-helper|, see Section \ref{code:ci-helper} for definition), that extracts information from the fact that the execution of a conditional batch does not alter a state. This can either happen, because the necessary predicate is not satisfied, or because the batch of instructions does not result in a change of any values.
+
+If we divide the proof into these two cases, we can see, that if the condition requiring the greate than relation ($a[n] > a[n + 1]$) was not true, then the opposite, a less than or equal relation ($a[n] \leq a[n + 1]$) must hold. (We can deduce this conclusion with the help of a function from the Agda Standard Library\cite{agda-stdlib}, which provides several lemmas for mathematical properties of natural numbers.) On the other hand, if the batch gets executed and the values remain the same, we can use our previously defined lemma to determine that they must be equal ($a[n] = a[n + 1]$), which in turn again implies the sought less than or equal ($a[n] \leq a[n + 1]$) relation. (Again with the help of a lemma from the standard library.)
+
+\begin{code}
+    \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{[}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{Ordered'}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{cb-helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{≰⇒>}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{s≤s}\AgdaSpace{}%
+    \AgdaBound{y}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{y}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{y}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{≤-reflexive}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{rp-h5}\AgdaSpace{}%
+    \AgdaBound{y}\AgdaSymbol{)}\<%
+\end{code}
+
+We can finally construct the proof for the entire array by recursively collecting the proofs for the individual pairs.
+
+\begin{code}
+    \>[0]\AgdaFunction{resultProof-n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{φ[}}\AgdaSpace{}%
+    \AgdaFunction{bubbleSort}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaFunction{Ordered}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaInductiveConstructor{zero}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{tt}\<%
+    \\
+    \>[0]\AgdaFunction{resultProof-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{fp}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaBound{fps}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaFunction{resultProof}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fp}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaInductiveConstructor{,}}\<%
+    \\
+    %
+    \>[2]\AgdaSymbol{(}\AgdaFunction{resultProof-n}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{fps}\AgdaSymbol{)}\<%
+\end{code}
+
+$\qed$

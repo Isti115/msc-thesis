@@ -1,51 +1,710 @@
 \begin{appendices}
 
-\chapter{Chapter in the appendices}
-\label{apx:example}
+\chapter{Extra parts of the source code}
+\label{apx:codes}
 
-The text of this appendix.
+% \section{Definition of the type representing natural numbers}
+% \begin{code}
+%     \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+%     \AgdaDatatype{ℕ}\AgdaSpace{}%
+%     \AgdaSymbol{:}\AgdaSpace{}%
+%     \AgdaPrimitiveType{Set}\AgdaSpace{}%
+%     \AgdaKeyword{where}\<%
+%     \\
+%     \>[0][@{}l@{\AgdaIndent{0}}]%
+%     \>[2]\AgdaInductiveConstructor{zero}\AgdaSpace{}%
+%     \AgdaSymbol{:}\AgdaSpace{}%
+%     \AgdaDatatype{ℕ}\<%
+%     \\
+%     %
+%     \>[2]\AgdaInductiveConstructor{suc}%
+%     \>[7]\AgdaSymbol{:}\AgdaSpace{}%
+%     \AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+%     \AgdaSymbol{:}\AgdaSpace{}%
+%     \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+%     \AgdaSymbol{→}\AgdaSpace{}%
+%     \AgdaDatatype{ℕ}\<%
+% \end{code}
 
-% \begin{verbatim}
-%   _⊢_ : State → Predicate → Set
-%   st ⊢ p = ⟦ p ⟧a st
+\section{Definition of the type representing finite sets}
+\begin{code}
+    \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaDatatype{Fin}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Fin}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaInductiveConstructor{suc}%
+    \>[7]\AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{i}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Fin}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Fin}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+\end{code}
 
-%   _⊩_ : State → Assertion → Set
-%   st ⊩ a = a st
+\section{Example implementation of \texttt{evaluateType}}
+\begin{code}
+    \>[0]\AgdaFunction{evaluateType}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Types}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\<%
+    \\
+    \>[0]\AgdaFunction{evaluateType}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\<%
+    \\
+    \>[0]\AgdaFunction{evaluateType}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{evaluateType}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSymbol{))}\<%
+    \\
+    \>[0]\AgdaFunction{evaluateType}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{QueueWithHistory}\AgdaSpace{}%
+    \AgdaBound{A}\<%
+\end{code}
 
-%   _⊪_ : State → Predicate → Set
-%   st ⊪ p = T (⟦ p ⟧c st)
+% \newpage
 
-%   _⊨_ : State → Predicate → Bool
-%   st ⊨ p = ⟦ p ⟧c st
+\section{Assertion decidability}
+\begin{code}
+    \>[2]\AgdaFunction{assertionDecidability}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{State}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaOperator{\AgdaFunction{¬}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{assertionDecidability}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{P}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧d}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{assertionDecidability}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{P}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{yes}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{p}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{assertionDecidability}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{P}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{¬p}\<%
+\end{code}
 
-%   _⊫_ : State → Condition → Bool
-%   st ⊫ c = c st
-% \end{verbatim}
-  
-% \begin{minted}{agda}
-%   _⊢_ : State → Predicate → Set
-%   st ⊢ p = ⟦ p ⟧a st
+\section{De Morgan's law of union}
+\begin{code}
+    \>[2]\AgdaFunction{notAndToOrNotNot}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{notAndToOrNotNot}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{st}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∧q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaFunction{assertionDecidability}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{st}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{\}}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{notAndToOrNotNot}\AgdaSpace{}%
+    \AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∧q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{¬p}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{notAndToOrNotNot}\AgdaSpace{}%
+    \AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∧q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{q}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∧q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{q}\AgdaSymbol{))}\<%
+\end{code}
 
-% \end{minted}
+\section{De Morgan's law of union}
+\begin{code}
+    \>[2]\AgdaFunction{notOrToAndNotNot}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{notOrToAndNotNot}\AgdaSpace{}%
+    \AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∨q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∨q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∘}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaBound{¬\AgdaUnderscore{}p∨q\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∘}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSymbol{))}\<%
+\end{code}
 
+\section{Eliminator of the empty type}
+\label{code:bottom-eliminator}
+\begin{code}
+    \>[0]\AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{⊥}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{A}\<%
+    \\
+    \>[0]\AgdaFunction{⊥-elim}\AgdaSpace{}%
+    \AgdaSymbol{()}\<%
+\end{code}
 
-%   _⊩_ : State → Assertion → Set
-%   st ⊩ a = a st
+\section{The \textbf{Unless} property is true for subsets of the program}
+\label{code:less-unless}
+\begin{code}
+    \>[2]\AgdaFunction{lessUnless}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{cb}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaGeneralizable{cbs}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{cbs}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{lessUnless}\AgdaSpace{}%
+    \AgdaBound{p▷[cb∷cbs]q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{λ}\AgdaSpace{}%
+    \AgdaBound{p△⌝q}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{lessCBLWP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p▷[cb∷cbs]q}\AgdaSpace{}%
+    \AgdaBound{p△⌝q}\AgdaSymbol{)}\<%
+\end{code}
 
-%   _⊪_ : State → Predicate → Set
-%   st ⊪ p = T (⟦ p ⟧c st)
+\section{The right-hand distributivity of disjunction over conjunction}
+\label{code:and-distributive-right}
+\begin{code}
+    \>[2]\AgdaFunction{andDistributiveToRight}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{andDistributiveToRight}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{andDistributiveToRight}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{andDistributiveFromRight}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇐}}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{andDistributiveFromRight}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{andDistributiveFromRight}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{r}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{andDistributiveRight}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇐⇒}}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{andDistributiveRight}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{andDistributiveToRight}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaFunction{andDistributiveFromRight}\AgdaSymbol{)}\<%
+\end{code}
 
-%   _⊨_ : State → Predicate → Bool
-%   st ⊨ p = ⟦ p ⟧c st
-
-%   _⊫_ : State → Condition → Bool
-%   st ⊫ c = c st
-
-You can refer to this appendix by using the label defined after the chapter directive (see \texttt{appendix.tex}).
-
-\restoregeometry
 \newpage
 
-\chapter{Another appendix}
-The text of this appendix.
+\section{PSP - \texttt{fromEnsures}}
+\label{code:from-ensures}
+\begin{code}
+    \input{code/PSP.tex}
+\end{code}
+
+\newpage
+
+% \section{}
+% \label{code:}
+% \begin{code}
+
+% \end{code}
+
+\section{Auxiliary function for proving Unless ($\rhd$) statements}
+\label{code:unless-proof}
+\begin{code}
+    \>[2]\AgdaFunction{▷-proofHelper}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaGeneralizable{b}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{((}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaGeneralizable{b}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-proofHelper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{st}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaArgument{R}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{R}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{pq}\AgdaSpace{}%
+    \AgdaBound{f}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧d}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-proofHelper}\AgdaSpace{}%
+    \AgdaBound{pq}\AgdaSpace{}%
+    \AgdaBound{f}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{yes}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{f}\AgdaSpace{}%
+    \AgdaBound{p}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-proofHelper}\AgdaSpace{}%
+    \AgdaBound{pq}\AgdaSpace{}%
+    \AgdaBound{f}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaField{proj₁}\AgdaSpace{}%
+    \AgdaBound{pq}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaFunction{▷-proof}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(}\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{b}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaSymbol{(\{}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{State}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{R}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{b}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\<%
+    \\
+    %
+    \>[4]\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-proof}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{[]}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{▷-proof}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{prf}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaBound{prfs}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaFunction{▷-proofHelper}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{prf}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{))}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{▷-proof}\AgdaSpace{}%
+    \AgdaBound{prfs}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{⌝q}\AgdaSymbol{))}\<%
+\end{code}
+
+\section{Auxiliary function for fixed point proofs}
+\label{code:ci-helper}
+\begin{code}
+    \>[2]\AgdaFunction{cb-helper}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaGeneralizable{b}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{¬}}\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaGeneralizable{b}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+    \AgdaGeneralizable{st}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{cb-helper}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{st}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{P}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaKeyword{with}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧d}}\AgdaSpace{}%
+    \AgdaBound{st}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{cb-helper}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{yes}\AgdaSpace{}%
+    \AgdaBound{p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaBound{eq}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{cb-helper}\AgdaSpace{}%
+    \AgdaBound{eq}\AgdaSpace{}%
+    \AgdaSymbol{|}\AgdaSpace{}%
+    \AgdaInductiveConstructor{no}\AgdaSpace{}%
+    \AgdaBound{¬p}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaBound{¬p}\<%
+\end{code}
+% \chapter{Chapter in the appendices}
+% \label{apx:example}
+
+% The text of this appendix.
+
+% % \begin{verbatim}
+% %   _⊢_ : State → Predicate → Set
+% %   st ⊢ p = ⟦ p ⟧a st
+
+% %   _⊩_ : State → Assertion → Set
+% %   st ⊩ a = a st
+
+% %   _⊪_ : State → Predicate → Set
+% %   st ⊪ p = T (⟦ p ⟧c st)
+
+% %   _⊨_ : State → Predicate → Bool
+% %   st ⊨ p = ⟦ p ⟧c st
+
+% %   _⊫_ : State → Condition → Bool
+% %   st ⊫ c = c st
+% % \end{verbatim}
+
+% % \begin{minted}
+% %   _⊢_ : State → Predicate → Set
+% %   st ⊢ p = ⟦ p ⟧a st
+
+% %   _⊩_ : State → Assertion → Set
+% %   st ⊩ a = a st
+
+% %   _⊪_ : State → Predicate → Set
+% %   st ⊪ p = T (⟦ p ⟧c st)
+
+% %   _⊨_ : State → Predicate → Bool
+% %   st ⊨ p = ⟦ p ⟧c st
+
+% %   _⊫_ : State → Condition → Bool
+% %   st ⊫ c = c st
+% % \end{minted}
+
+% % \begin{lstlisting}
+% %   _⊢_ : State → Predicate → Set
+% %   st ⊢ p = ⟦ p ⟧a st
+
+% %   _⊩_ : State → Assertion → Set
+% %   st ⊩ a = a st
+
+% %   _⊪_ : State → Predicate → Set
+% %   st ⊪ p = T (⟦ p ⟧c st)
+
+% %   _⊨_ : State → Predicate → Bool
+% %   st ⊨ p = ⟦ p ⟧c st
+
+% %   _⊫_ : State → Condition → Bool
+% %   st ⊫ c = c st
+% % \end{lstlisting}
+
+% % \input{Base.tex}
+
+% You can refer to this appendix by using the label defined after the chapter directive (see \texttt{appendix.tex}).
+
+% \restoregeometry
+% \newpage
+
+% \chapter{Another appendix}
+% The text of this appendix.
 \end{appendices}

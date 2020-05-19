@@ -1,0 +1,2763 @@
+\section{Formalization}
+
+In this section we present our formalization of the notion of parallel programs, predicates and their semantics introduced by the model we build upon. The formalisation of the parallel bubble sort and the concepts that are required for writing specification statements are also included.
+
+\subsection{Parallel Programs and Predicates}
+
+Since our formalization does not follow the book of the subject exactly, we present the following basic notions that we introduced in our version and built upon:
+\begin{itemize}
+    \item \verb|Type| - We defined the set of possible types of variables in the programs as an inductive datatype, which enabled the use of parametric types as well.
+    \begin{code}
+        \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSpace{}%
+        \AgdaKeyword{where}\<%
+        \\
+        \>[0][@{}l@{\AgdaIndent{0}}]%
+        \>[2]\AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Types}\<%
+        \\
+        %
+        \>[2]\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Types}\<%
+        \\
+        %
+        \>[2]\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Types}\<%
+    \end{code}
+    
+    \item \verb|Environment| - An environment has a defined number of variables and a type assigned to each of them. It essentially describes a state space. (The type \verb|Fin n| denotes the finite set with $n$ elements, see Appendix \ref{apx:codes} for its definition.)
+    \begin{code}
+        \>[0]\AgdaKeyword{module}\AgdaSpace{}%
+        \AgdaModule{Environment}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{varCount}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{varTypes}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Fin}\AgdaSpace{}%
+        \AgdaBound{varCount}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaKeyword{where}\<%
+    \end{code}
+    
+    \item \verb|Variable| - A variable in this model can be thought of as just an index, that can be used to reference a certain part of the state.
+    \begin{code}
+        \>[2]\AgdaFunction{Vars}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{Vars}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaDatatype{Fin}\AgdaSpace{}%
+        \AgdaBound{varCount}\<%
+    \end{code}
+    
+    \item \verb|State| - We modeled a state as a function that maps the previously introduced variables to the respective value sets of their types. (The \verb|evaluateType| function assigns the previously defined data types to their Agda representations. It has multiple possible definitions which can all be equivalent in terms of the expressive power of the resulting model, what it affects is the structure of the proofs. A possible definition we used can be found in appendix \ref{apx:codes}.)
+    \begin{code}
+        \>[2]\AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{i}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Vars}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{evaluateType}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{varTypes}\AgdaSpace{}%
+        \AgdaBound{i}\AgdaSymbol{)}\<%
+    \end{code}
+    
+    \item \verb|Expression| - The building blocks that can be used for constructing an expression that can either be on the right hand side of an assignment or serve as a part of a predicate. They are annotated with the types that are the results of their evaluation, which increases the potential for code reuse by eliminating the need for separate constructors for separate types and prevents their usage in the wrong contexts.
+    \begin{code}
+        \>[2]\AgdaKeyword{data}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\AgdaSpace{}%
+        \AgdaKeyword{where}\<%
+    \end{code}
+    \begin{itemize}
+        \item The \verb|Const| constructor creates a constant expression by directly giving the agda representation of its value.
+        \begin{code}
+            % \>[2][@{}l@{\AgdaIndent{0}}]%
+            \>[4]\AgdaInductiveConstructor{Const}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaFunction{evaluateType}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\<%
+        \end{code}
+        
+        \item The \verb|GetArray| constructor creates an expression that accesses a value at a specific index from an array.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{GetArray}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[4][@{}l@{\AgdaIndent{0}}]%
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\<%
+        \end{code}
+        
+        \item The \verb|SetArray| constructor creates an expression that creates a modified version of a given array, that contains an updated value at the given index.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{SetArray}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[4][@{}l@{\AgdaIndent{0}}]%
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            %
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item The \verb|Var| constructor creates an expression, the results of which is the value of a given variable in the state it is evaluated in.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Var}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaBound{x}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaFunction{Vars}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaBound{varTypes}\AgdaSpace{}%
+            \AgdaBound{x}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item The expressions created by the \verb|Plus| constructor evaluate to the sum of what its subexpressions evaluate to.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Plus}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\<%
+        \end{code}
+        
+        \item The \verb|Hiext| constructor allows for the creation of expressions that evaluate to an extended version of a given channel that has a new value added to it. This is more commonly called the \textit{enqueue} operation.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Hiext}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[4][@{}l@{\AgdaIndent{0}}]%
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item The \verb|Lov| constructor creates an expression that accesses the first value in a given channel. This is more commonly called the \textit{peek} operation.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Lov}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\<%
+        \end{code}
+        
+        \item The \verb|Lorem| constructor creates an expression that evaluates to an updated version of a given channel, that has its first element removed. This is more commonly called the \textit{dequeue} operation.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Lorem}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[4][@{}l@{\AgdaIndent{0}}]%
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item The \verb|History| constructor creates an expression that evaluates to a channel that has all the elements in it that were ever added to the channel given as parameter.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{History}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[4][@{}l@{\AgdaIndent{0}}]%
+            \>[6]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item Expressions created with the \verb|Len| constructor evaluate to the length of a given channel.
+        \begin{code}
+            \>[4]\AgdaInductiveConstructor{Len}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{DataChannel}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Nat}\AgdaSymbol{)}\<%
+        \end{code}
+        
+        \item[+] Also, the following syntactical notations were defined for easier usage when constructing programs.
+        \begin{code}
+            \>[2]\AgdaOperator{\AgdaFunction{v[\AgdaUnderscore{}]}}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaBound{x}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaFunction{Vars}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaBound{varTypes}\AgdaSpace{}%
+            \AgdaBound{x}\AgdaSymbol{)}\<%
+            \\
+            %
+            \>[2]\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+            \AgdaBound{x}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+            \AgdaSymbol{=}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Var}\AgdaSpace{}%
+            \AgdaBound{x}\<%
+            \\
+            %
+            \\[\AgdaEmptyExtraSkip]%
+            %
+            \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+            \AgdaNumber{3}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}g[\AgdaUnderscore{}]}}\<%
+            \\
+            %
+            \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}g[\AgdaUnderscore{}]}}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[2][@{}l@{\AgdaIndent{0}}]%
+            \>[4]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\<%
+            \\
+            %
+            \>[2]\AgdaBound{el}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+            \AgdaBound{ei}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+            \AgdaSymbol{=}\AgdaSpace{}%
+            \AgdaInductiveConstructor{GetArray}\AgdaSpace{}%
+            \AgdaBound{ei}\AgdaSpace{}%
+            \AgdaBound{el}\<%
+            \\
+            %
+            \\[\AgdaEmptyExtraSkip]%
+            %
+            \>[2]\AgdaKeyword{infixl}\AgdaSpace{}%
+            \AgdaNumber{3}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}s[\AgdaUnderscore{}]=\AgdaUnderscore{}}}\<%
+            \\
+            %
+            \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}s[\AgdaUnderscore{}]=\AgdaUnderscore{}}}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{:}\AgdaSpace{}%
+            \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            \>[2][@{}l@{\AgdaIndent{0}}]%
+            \>[4]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+            \AgdaSymbol{→}\AgdaSpace{}%
+            \AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSpace{}%
+            \AgdaSymbol{→}\<%
+            \\
+            %
+            \>[4]\AgdaDatatype{Expression}\AgdaSpace{}%
+            \AgdaSymbol{(}\AgdaInductiveConstructor{Array}\AgdaSpace{}%
+            \AgdaBound{A}\AgdaSymbol{)}\<%
+            \\
+            %
+            \>[2]\AgdaBound{el}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{s[}}\AgdaSpace{}%
+            \AgdaBound{ei}\AgdaSpace{}%
+            \AgdaOperator{\AgdaFunction{]=}}\AgdaSpace{}%
+            \AgdaBound{ev}\AgdaSpace{}%
+            \AgdaSymbol{=}\AgdaSpace{}%
+            \AgdaInductiveConstructor{SetArray}\AgdaSpace{}%
+            \AgdaBound{ei}\AgdaSpace{}%
+            \AgdaBound{ev}\AgdaSpace{}%
+            \AgdaBound{el}\<%
+        \end{code}
+        
+    \end{itemize}
+    
+    \item \verb|Predicate| - The constructors of this inductively defined type describe the possible circumstances, to which we can later constrain the execution of conditional instructions. Their short descriptions are given in comments. By defining this in this manner, instead of simply relying on general logical functions that map from states to Boolean values, we can achieve much cleaner proofs, by actually getting the information we have in a way that can be used for reasoning instead of having to extract it from the parameters every time individually. 
+    
+    This inductive definition was also crucial to enable the decidability of assertions, which were created from predicates, (see \verb|assertionDecidability| in Appendix \ref{apx:codes}), by enabling pattern matching on the predicates instead of representing them as generic logical functions, which in turn made the formalization of De Morgan's law of union possible.
+    \begin{code}
+        \>[2]\AgdaKeyword{data}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\AgdaSpace{}%
+        \AgdaKeyword{where}\<%
+        \\
+        \>[2][@{}l@{\AgdaIndent{0}}]%
+        \>[4]\AgdaInductiveConstructor{TRUE}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Predicate that is true in every state}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{FALSE}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Predicate that is false in every state}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{NOT}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Logical negation}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{AND}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Logical conjunction}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{OR}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Logical disjunction}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[4]\AgdaInductiveConstructor{EQ}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Types}\AgdaSymbol{\}}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaBound{A}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaBound{A}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Equality}\<%
+        \\
+        %
+        % \\[\AgdaEmptyExtraSkip]%
+        % %
+        \>[4]\AgdaInductiveConstructor{LTE}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Less Than or Equal}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{GTE}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Greater Than or Equal}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{LT}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Less Than}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{GT}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaInductiveConstructor{Nat}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}\AgdaComment{-- Greater Than}\<%
+    \end{code}
+    Similarly to the expressions, predicates have their own syntactical operators that make writing and reading them easier in more complex formulae.
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{⌝\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⌝\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{NOT}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaKeyword{infixr}\AgdaSpace{}%
+        \AgdaNumber{6}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}△\AgdaUnderscore{}}}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}△\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}△\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{AND}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaKeyword{infixr}\AgdaSpace{}%
+        \AgdaNumber{5}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}▽\AgdaUnderscore{}}}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}▽\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}▽\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaInductiveConstructor{OR}\<%
+    \end{code}
+    
+    
+    \item \verb|Instruction| - Currently there is only one type of instruction, a basic assignment that is made up from a variable and an expression of the same type to be evaluated and assigned to it. This will later need to be extended to add support for the proper behavior of certain more complicated data structures, like channels. 
+    % A list of parallelly executed assignments that give certain variables new values by evaluating expressions in the current state.
+    \begin{code}
+        \>[2]\AgdaKeyword{data}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\AgdaSpace{}%
+        \AgdaKeyword{where}\<%
+        \\
+        \>[2][@{}l@{\AgdaIndent{0}}]%
+        \>[4]\AgdaComment{-- SKIP : Instruction}\<%
+        \\
+        %
+        \>[4]\AgdaInductiveConstructor{Assignment}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{var}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Vars}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Expression}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{varTypes}\AgdaSpace{}%
+        \AgdaBound{var}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\<%
+    \end{code}
+    (Initially a special instruction, \verb|SKIP| was included to be used when no operation should
+    be done, but in the current system that can be achieved by using an empty list of instructions.)
+    
+\end{itemize}
+
+% Semantic brackets macro
+\newcommand{\sem}[2]{\llbracket #1 \rrbracket #2}
+
+The following list contains the semantic operators that give the previously defined Predicates meanings. Their explanations are followed by code examples that give more precise typing information on them.
+\begin{itemize}
+    \item $\sem{\_}{a}$ - Makes an assertion from a predicate by turning it into a function from state to type. By creating a type, an instance can later be given for it, proving that the assertion and thus the predicate holds in the given state.
+    % ($\sem{\_}{a} : Predicate \to State \to Set$)
+    \begin{code}
+        \>[2]\AgdaFunction{Assertion}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set₁}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{Assertion}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧a}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+    \end{code}
+
+    \item $\sem{\_}{d}$ - Turns predicates into decisions, a special type that either carries a proof that a certain predicate holds in a given state, or a refutation claiming the opposite.
+    \begin{code}
+        \>[2]\AgdaFunction{Decision}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{Decision}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaRecord{Dec}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧d}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{p}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Decision}\AgdaSpace{}%
+        \AgdaBound{p}\<%
+    \end{code}
+
+    \item $\sem{\_}{c}$ - Turns predicates into conditions that can be evaluated for a given state. Essentially turns a predicated into a function from states to Boolean logical values.
+    % ($\sem{\_}{c} : Predicate \to State \to Condition$) where $Condition = State \to Bool$
+    \begin{code}
+        \>[2]\AgdaFunction{Condition}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{Condition}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Bool}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧c}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Condition}\<%
+    \end{code}
+\end{itemize}
+
+Similarly, there are also operators for handling Instructions.
+\begin{itemize}
+    \item $\sem{\_}{pi}$ - This operator describes the semantics of a parallel instruction, meaning an instruction that is meant to be executed concurrently with other instructions. It has an two parameters, the state, based on which the expressions occurring in the instruction should be evaluated, and the state function that should be updated to reflect the effects of the instruction. This separation is necessary to properly represent the semantics of concurrency, as the instructions are supposed to be treated as if they were executed at the same time, thus the results of their expressions need to be based on a common original state.
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧pi}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+    \end{code}
+    
+    \item $\sem{\_}{pil}$ - By utilizing the function defined above for individual parallel instructions, this semantic operator executes a list of instructions in a parallel-like fashion by starting them from the same state and accumulating their modifications.
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧pil}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{List}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+    \end{code}
+    
+    \item $\sem{\_}{i}$ and $\sem{\_}{il}$ - The usage of the previous operators are made easier by defining $\sem{\_}{i}$ and $\sem{\_}{il}$, each having one less parameter. They call their respective more general versions by taking the argument they received and passing if forward twice.
+    (The $\sem{\_}{il}$ operator essentially turns a list of instructions into a single deterministic state transition function, that is analogue to a simplification of what the original model describes.)
+    
+    % We also define an additional operator which turns instructions into functions that map from states to states.
+    % \\ ($\sem{\_}{i} : Instruction \to State \to State$)
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧i}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧il}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{List}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+    \end{code}
+
+\end{itemize}
+
+While these would already be sufficient, a few more type aliases were also created for the purpose of increasing clarity and brevity, thus making the code easier to read and understand:
+\begin{itemize}
+    
+    \item \verb|Batch| - A list of instructions that should all be executed at once. Their expressions are all evaluated in the same state, thus their results turn out as if they were done simultaneously.
+    \begin{code}
+        \>[2]\AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaDatatype{List}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧b}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧b}}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧il}}\<%
+    \end{code}
+    
+    \item \verb|ConditionalBatch| - A \verb|Batch| that is paired by a \verb|Pradicate| that represents the preceding conditions under which it should be executed.
+    \begin{code}
+        \>[2]\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaFunction{Batch}\AgdaSymbol{)}\<%
+    \end{code}
+    
+    \item \verb|ParallelProgram| - A list of \verb|ConditionalBatch|-es, that represents the set of operations which are executed in an impartially scheduled (see Definition \ref{def:impartial-scheduling}) way during runtime.
+    \begin{code}
+        \>[2]\AgdaFunction{ParallelProgram}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{ParallelProgram}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaDatatype{List}\AgdaSpace{}%
+        \AgdaFunction{ConditionalBatch}\<%
+    \end{code}
+    
+    \item \verb|InitializedProgram| - A \verb|ParallelProgram| extended with a special batch of instructions to be performed at the beginning of the execution.
+    \begin{code}
+        \>[2]\AgdaFunction{InitializedProgram}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{InitializedProgram}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaFunction{ParallelProgram}\AgdaSymbol{)}\<%
+    \end{code}
+    
+\end{itemize}
+
+With all of these in place we can finally introduce the operator that determines the meaning of the main building block of our model, and by doing so essentially connects the previous definitions to the specification statements discussed later.
+\begin{itemize}
+    \item $\sem{\_}{cb}$ - The conditional batch effect function checks if the given condition is fulfilled, in which case it produces a state to be returned, that is updated by the effects of the instructions in the batch, otherwise it returns the state untouched. Its behavior can be mathematically described using the following definition:
+    \begin{equation}
+        \sem{(P, b)}{cb}(st) = 
+        \left\{
+        	\begin{array}{ll}
+        		\sem{b}{b}(st) & \mbox{if } \sem{P}{c}(st) = true \\
+        		st & \mbox{otherwise}
+        	\end{array}
+        \right.
+    \end{equation}
+    
+    This translates to the following Agda representation using dependent pattern matching:
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧cb}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaKeyword{with}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧c}}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \>[2]\AgdaSymbol{...}\AgdaSpace{}%
+        \AgdaSymbol{|}\AgdaSpace{}%
+        \AgdaInductiveConstructor{true}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \>[2]\AgdaSymbol{...}\AgdaSpace{}%
+        \AgdaSymbol{|}\AgdaSpace{}%
+        \AgdaInductiveConstructor{false}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+    \end{code}
+    
+    Even though the definition given above is equal to the one below in terms of their meaning, separating the decision by introducing a helper function resulted in cleaner proofs, so in the current codebase the following version is in use:
+    \begin{code}
+        \>[2]\AgdaFunction{⟦⟧cbHelper}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Bool}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{⟦⟧cbHelper}\AgdaSpace{}%
+        \AgdaInductiveConstructor{true}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{⟦⟧cbHelper}\AgdaSpace{}%
+        \AgdaInductiveConstructor{false}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧cb}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaFunction{⟦⟧cbHelper}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧c}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+    \end{code}
+\end{itemize}
+
+
+\subsection{Example: Parallel Bubble Sort}
+\label{subsec:parallel-bubble-sort}
+
+As an example for how parallel programs can be represented in the system described above, we formalized the following concurrent bubble sort algorithm as it is defined in \cite{hz-orsi} and \cite{hz-article}.
+
+% \begin{equation}
+% \begin{multlined}
+
+% \begin{equation}
+%     BubbleSort_n = (SKIP, \{ \, ( \, (a[i] > a[i+1])\:,\:(a[i],a[i+1]:= a[i+1],a[i] \, ) \; | \; i \in \{1,\dots,n-1\} \, \})
+% \end{equation}
+
+% \begin{align}
+% \begin{split}
+%     & BubbleSort_n = ( \\
+%     & \;\;\;\; SKIP \; , \; \{ \, ( \, (a[i] > a[i+1])\:,\:(a[i],a[i+1]:= a[i+1],a[i] \, ) \; | \; i \in \{1,\dots,n-1\} \, \} \\
+%     & )
+% \end{split}
+% \end{align}
+
+\vspace{-0.5cm} % TODO: Check if this is really needed
+
+\begin{align}
+\begin{split}
+    BubbleSort_n = ( & \\
+    %   & (TRUE \:,\: SKIP), \\
+      & SKIP, \\
+      & \{ \, ( \, (a[i] > a[i+1])\:,\:(a[i],a[i+1]:= a[i+1],a[i] \, ) \; | \; i \in \{1,\dots,n-1\} \, \} \\
+    ) &
+\end{split}
+\end{align}
+
+First we created an environment that has a single variable of the type that represents an array of natural numbers.
+
+\begin{code}
+    \>[0]\AgdaFunction{varTypes}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Fin}\AgdaSpace{}%
+    \AgdaNumber{1}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Base.Types}\<%
+    \\
+    \>[0]\AgdaFunction{varTypes}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Base.Array}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Base.Nat}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaKeyword{open}\AgdaSpace{}%
+    \AgdaKeyword{module}\AgdaSpace{}%
+    \AgdaModule{BubbleSortEnvironment}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaModule{Base.Environment}\AgdaSpace{}%
+    \AgdaNumber{1}\AgdaSpace{}%
+    \AgdaFunction{varTypes}\<%
+\end{code}
+
+The resulting code has two functions for creating the predicates and the instructions and a main definition that acts as the set-builder notation by constructing the list using the functions. Notice that the program receives a natural number as parameter, it is used to determine the length of the array to be sorted.
+
+\begin{code}
+    \>[0]\AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    \>[0]\AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{GT}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Instruction}\<%
+    \\
+    \>[0]\AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaInductiveConstructor{Assignment}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\<%
+    \\
+    %
+    \>[6]\AgdaOperator{\AgdaFunction{s[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]=}}\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaOperator{\AgdaFunction{s[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]=}}\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{v[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{0F}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{g[}}\AgdaSpace{}%
+    \AgdaInductiveConstructor{Const}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{bubbleSort}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\<%
+    \\
+    \>[0]\AgdaFunction{bubbleSort}\AgdaSpace{}%
+    \AgdaBound{count}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaFunction{Data.List.map}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{makePredicate}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{[}}\AgdaSpace{}%
+    \AgdaFunction{makeInstruction}\AgdaSpace{}%
+    \AgdaBound{x}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSymbol{))}\<%
+    \\
+    %
+    \>[4]\AgdaSymbol{(}\AgdaFunction{downFrom}\AgdaSpace{}%
+    \AgdaBound{count}\AgdaSymbol{)}\<%
+\end{code}
+
+
+\subsection{Specification Statements}
+
+Now, that we have the foundations laid down, we can start defining the statements that will be available for building specifications. To make the code cleaner the following operators are introduced for denoting the interaction between states and the various forms of predicates.
+\begin{itemize}
+    \item Mapping a state and a predicate or assertion to a set creates a type that claims that the predicate is satisfied in the given state. An instance of the resulting type can serve as a proof for such a claim.
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊢\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊩\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[2]\AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊩}}\AgdaSpace{}%
+        \AgdaBound{a}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaBound{a}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+    \end{code}
+    
+        % \\
+        % %
+        % \\[\AgdaEmptyExtraSkip]%
+        % %
+        % \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊪\AgdaUnderscore{}}}\AgdaSpace{}%
+        % \AgdaSymbol{:}\AgdaSpace{}%
+        % \AgdaFunction{State}\AgdaSpace{}%
+        % \AgdaSymbol{→}\AgdaSpace{}%
+        % \AgdaDatatype{Predicate}\AgdaSpace{}%
+        % \AgdaSymbol{→}\AgdaSpace{}%
+        % \AgdaPrimitiveType{Set}\<%
+        % \\
+        % %
+        % \>[2]\AgdaBound{st}\AgdaSpace{}%
+        % \AgdaOperator{\AgdaFunction{⊪}}\AgdaSpace{}%
+        % \AgdaBound{p}\AgdaSpace{}%
+        % \AgdaSymbol{=}\AgdaSpace{}%
+        % \AgdaFunction{T}\AgdaSpace{}%
+        % \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        % \AgdaBound{p}\AgdaSpace{}%
+        % \AgdaOperator{\AgdaFunction{⟧c}}\AgdaSpace{}%
+        % \AgdaBound{st}\AgdaSymbol{)}\<%
+        % \\
+        % %
+        % \\[\AgdaEmptyExtraSkip]%
+        % %
+    
+    \item Since all the predicates and conditions are decidable, we can evaluate them to Boolean truth values in any given state.
+    \begin{code}
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊨\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Bool}\<%
+        \\
+        %
+        \>[2]\AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊨}}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{p}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧c}}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊫\AgdaUnderscore{}}}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Condition}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{Bool}\<%
+        \\
+        %
+        \>[2]\AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊫}}\AgdaSpace{}%
+        \AgdaBound{c}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaBound{c}\AgdaSpace{}%
+        \AgdaBound{st}\<%
+    \end{code}
+\end{itemize}
+
+We define a few so called \textit{variables}, which in Agda essentially means identifiers with defined types that can be used as implicit parameters without having to mention them at every function that uses them.
+
+
+\begin{multicols}{2}[]
+    \begin{code}
+        \>[2]\AgdaKeyword{variable}\<%
+        \\
+        \>[2][@{}l@{\AgdaIndent{0}}]%
+        \>[4]\AgdaGeneralizable{P}\AgdaSpace{}%
+        \AgdaGeneralizable{P₁}\AgdaSpace{}%
+        \AgdaGeneralizable{Q}\AgdaSpace{}%
+        \AgdaGeneralizable{Q₁}\AgdaSpace{}%
+        \AgdaGeneralizable{R}\AgdaSpace{}%
+        \AgdaGeneralizable{V}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{A}\AgdaSpace{}%
+        \AgdaGeneralizable{B}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{C}\AgdaSpace{}%
+        \AgdaGeneralizable{D}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Condition}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{W}\AgdaSpace{}%
+        \AgdaGeneralizable{X}\AgdaSpace{}%
+        \AgdaGeneralizable{Y}\AgdaSpace{}%
+        \AgdaGeneralizable{Z}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaPrimitiveType{Set}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{st}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{State}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[4]\AgdaGeneralizable{i}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{Instruction}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{s₀}\AgdaSpace{}%
+        \AgdaGeneralizable{b}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{Batch}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{cb}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{ConditionalBatch}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{cbs}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaDatatype{List}\AgdaSpace{}%
+        \AgdaFunction{ConditionalBatch}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{S}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{ParallelProgram}\<%
+        \\
+        %
+        \>[4]\AgdaGeneralizable{I}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaFunction{InitializedProgram}\<%
+    \end{code}
+\end{multicols}
+
+\newpage % TODO: Check if this is necessary!
+
+Also, a new type synonym is introduced to make the code more expressive.
+
+\begin{code}
+    \>[2]\AgdaFunction{Statement}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set₁}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Statement}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\<%
+\end{code}
+
+To express relationships between predicates we create an operator that describes implication (see Definition \ref{def:implication}), meaning that for $P \Rightarrow Q$ to hold, every state, that satisfies $P$ must satisfy $Q$ as well. Extra operators are also defined for the inverse of the relation and a symmetric version.
+
+\begin{code}
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇒\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇒\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{∀\{}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{State}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇐\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇐\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇐}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaBound{P}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇐⇒\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇐⇒\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇐⇒}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇒}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇐}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\<%
+\end{code}
+
+We can define the same relation for assertions in a similar way. Notice, that these definitions are essentially equivalent, the proof of their equality can be constructed trivially using the identity function, since they normalize to the same expressions, but some conversions between predicates and assertions can be avoided by introducing them separately.
+
+\begin{code}
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇛\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇛\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{∀\{}\AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{State}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊩}}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊩}}\AgdaSpace{}%
+    \AgdaBound{B}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇚\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇚\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇚}}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaBound{A}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇚⇛\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⇚⇛\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇚⇛}}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇚}}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSymbol{)}\<%
+\end{code}
+
+Now, we can define the two core assertions, the \textit{Weakest Precondition} and the \textit{Strongest Postcondition}, that serve as the basis of the others. They describe the connection between predicates and instructions. We define them in an iterative manner, by first expressing their meaning using mathematical notation for simple instructions, then giving the formalized code segments for single instructions, batches of instructions, conditional batches and finally lists of conditional batches, which are essentially equivalent to parallel programs. Mathematical notation is also given for the last definitions.
+Since these cannot appear as conditions for instructions, nor can they always be decidable (since the decidability of a strongest postcondition could require the enumeration of the entire state space, which can potentially be infinite), they are not given as \textbf{Predicates} or \textbf{Conditions}, only as \textbf{Assertions}.
+% following constructions can be introduced based on the previous definitions:
+\begin{itemize}
+    \item Weakest Precondition - The weakest precondition for a given predicate with respect to an instruction represents the function that only evaluates to a non-empty type for a certain state, if after executing that instruction the given predicate holds in the resulting state.
+    When applied to an entire parallel program, it represents the broadest possible subset of the state space, from which executing a single batches of the program definitely take us into the truth set of the given predicate, no matter which one we chose.
+    \begin{equation}
+        WP(i , P) = \sem{P}{a} \circ \sem{i}{i}
+    \end{equation}
+    \begin{code}
+        \>[2]\AgdaFunction{IWP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{IWP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{i}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{i}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{BWP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{BWP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{CBWP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{CBWP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{CBLWP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{ParallelProgram}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{CBLWP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{S}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{All}\AgdaSpace{}%
+        \AgdaSymbol{(λ}\AgdaSpace{}%
+        \AgdaBound{cb}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊩}}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{CBWP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)))}\AgdaSpace{}%
+        \AgdaBound{S}\<%
+    \end{code}
+    \begin{equation}
+        CBLWP(S , P)(st) = \bigwedge\limits_{s_i \in S} CBWP(s_i, P)(st)
+    \end{equation}
+    
+    \item Strongest Postcondition - For a given condition and instruction the strongest postcondition gives the function that returns a type for a given state, which represents the existence of a starting state, in which the given condition is satisfied, and the execution of the given instruction results in the given state.
+    In its last variation it represents the smallest possibles subset of the state space, to which executing any single batch of the program can take it from the given starting state.
+    
+    % after executing the instruction whether it was started from a state that satisfied the original condition.
+    \begin{equation}
+        SP(i, Q)(st) = \exists st_0 \in State : \sem{Q}{a}(st_0) \land \sem{i}{i}(st_0) = st
+    \end{equation}
+    \begin{code}
+        \>[2]\AgdaFunction{ISP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaDatatype{Instruction}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{ISP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{i}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaRecord{Σ}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{(λ}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{i}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{BSP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{Batch}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{BSP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaRecord{Σ}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{(λ}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{b}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{CBSP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{CBSP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaRecord{Σ}\AgdaSpace{}%
+        \AgdaFunction{State}\AgdaSpace{}%
+        \AgdaSymbol{(λ}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+        \AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSymbol{)}\<%
+        \\
+        %
+        \\[\AgdaEmptyExtraSkip]%
+        %
+        \>[2]\AgdaFunction{CBLSP}\AgdaSpace{}%
+        \AgdaSymbol{:}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{ParallelProgram}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaDatatype{Predicate}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaFunction{Assertion}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{CBLSP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{S}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{λ}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaDatatype{All}\AgdaSpace{}%
+        \AgdaSymbol{(λ}\AgdaSpace{}%
+        \AgdaBound{cb}\AgdaSpace{}%
+        \AgdaSymbol{→}\AgdaSpace{}%
+        \AgdaBound{st}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{⊩}}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaFunction{CBSP}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaBound{cb}\AgdaSpace{}%
+        \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+        \AgdaBound{P}\AgdaSymbol{)))}\AgdaSpace{}%
+        \AgdaBound{S}\<%
+    \end{code}
+    \begin{equation}
+        CBLSP(S , Q)(st) = \bigwedge\limits_{s_i \in S} CBSP(s_i, Q)(st)
+    \end{equation}
+\end{itemize}
+
+
+% To iterate on these, we can add some conditional versions of them:
+
+% \begin{itemize}
+%     % \item Conditional Instruction - A conditional instruction is an instruction paired with a condition under which it can be executed. ($(P, i)$)
+    
+%     \item Conditional Weakest Precondition - $cwp(ci , P) = P \circ \sem{ci}{ci}$.
+%     \item Conditional Strongest Postcondition - \\
+%     $
+%     csp(ci, Q)(st) =
+%         \left\{
+%         	\begin{array}{ll}
+%         		true & \mbox{if } \exists \, st0 : State , \sem{Q}{c}(st0) = true \land \sem{ci}{ci}(st0) = st \\
+%         		false & \mbox{otherwise}
+%         	\end{array}
+%         \right.
+%     $
+% \end{itemize}
+
+% And finally the parallel constructions:
+
+% \begin{itemize}
+%     % \item Parallel Program - A pair of an initial conditional instruction ($s_0$) and a set of conditional instructions. ($(s_0, \{s_1, \, s_2, \, \dots , \, s_n\})$)
+
+%     \item Parallel Conditional Weakest Precondition - Logical function that only returns true, if all the conditional instructions of a parallel program satisfy the Conditional Weakest Precondition. \\
+%     $
+%     pcwp(s , P)(st) = \bigwedge\limits_{s_i \in S} cwp(s_i, P)(st)
+%     $
+%     \item Parallel Conditional Strongest Postcondition - \\
+%     $
+%     pcsp(s , Q)(st) =
+%         \left\{
+%         	\begin{array}{ll}
+%         		true & \mbox{if } \forall s_i \in s : csp(s_i, Q)(st) \\
+%         		false & \mbox{otherwise}
+%         	\end{array}
+%         \right.
+%     $
+% \end{itemize}
+
+
+Using these constructions, the specification statements from the original material can be created. These are given with a short verbal explanation first, then they are given with mathematical notation, which is followed by their Agda representation in our formalization.
+
+% TODO: Fix parameters in infix notation definitions
+
+\paragraph{Unless:}
+$P \rhd_S Q$ represents a safety condition with the semantic meaning that if the predicate $P$ is true in any given state of the program, then it either stays satisfied, or Q becomes true. In other words, the truth set of $P$ can only be left through the truth set of $Q$.
+% $P \land \neg Q \Rightarrow \mbox{PCWP}(S, P \lor Q)$
+% $P \land \neg Q \Rightarrow \mbox{pcwp}(S, P \lor Q)$
+
+\begin{equation}
+    \label{eq:unless}
+    \infer{P \rhd_S Q}{P \land \neg Q \Rightarrow CBLWP(S, P \lor Q)}
+\end{equation}
+
+\begin{code}
+    \>[2]\AgdaFunction{Unless}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Unless}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{CBLWP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{))}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}▷[\AgdaUnderscore{}]\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}▷[\AgdaUnderscore{}]\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Unless}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Progress:}
+$P \rightarrowtail_S Q$ means that there is at least one conditional batch in the program through which we can move from a state which satisfies $P$ but not $Q$ to a state that satisfies $Q$.
+
+\begin{equation}
+    \label{eq:progress}
+    \infer{P \rightarrowtail_S Q}{\exists s_i \in S : P \land \neg Q \Rightarrow CBLWP(s_i, Q)}
+\end{equation}
+
+\begin{code}
+    \>[2]\AgdaFunction{Progress}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Progress}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaDatatype{Any}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{cb}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⌝}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{CBWP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{cb}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)))}\AgdaSpace{}%
+    \AgdaBound{S}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↣[\AgdaUnderscore{}]\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↣[\AgdaUnderscore{}]\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↣[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Progress}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Ensures:}
+$P \mapsto_S Q$ means that we can only leave the truth set of $P$ through $Q$ and there exists a conditional batch through which this can actually happen. (And due to the impartial scheduling, see Definition \ref{def:impartial-scheduling}, it will eventually be executed, so being in the truth set of $P$ essentially ensures that we will directly step into the truth set of $Q$ at some point.)
+
+\begin{equation}
+    \label{eq:ensures}
+    \infer{P \mapsto_S Q}{P \rhd_S Q & P \rightarrowtail_S Q}
+\end{equation}
+
+\begin{code}
+    \>[2]\AgdaFunction{Ensures}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Ensures}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{Unless}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaFunction{Progress}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↦[\AgdaUnderscore{}]\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↦[\AgdaUnderscore{}]\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↦[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Ensures}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Inevitable:}
+$P \hookrightarrow_S Q$ is the transitive disjunctive closure (see Definition \ref{def:transitive-disjunctive-closure}) of $P \mapsto_S Q$. This definition results in a statement which states that if we ever step into the truth set of $P$, we will inevitably have to reach a state in the truth set of $Q$, even if through numerous intermediate steps. In this sense, it is analogue to the $\lozenge$ \textit{(future)} operator of Linear Temporal Logic.
+
+This statement is special in the sense, that it is defined with its own inductive datatype instead of evaluating to lower level constructs. This is because the elements of a transitive disjunctive closure of a relation can be created in three different ways.
+
+\begin{itemize}
+    \item They can be lifted from the base set. This rule makes sure that the resulting relation contains all the pairs from the initial set. It is so to speak, the base case, since all the other constructors have elements of the relation as parameters as well, but in this one it only appears in the result.
+    \begin{equation}
+        \label{eq:leadsto-fromensures}
+        \infer{P \hookrightarrow_S Q}{P \mapsto_S Q}
+    \end{equation}
+
+    \item They can be the result of a transition through another state.
+    \begin{equation}
+        \label{eq:leadsto-transitivity}
+        \infer{P \hookrightarrow_S R}{P \hookrightarrow_S Q & Q \hookrightarrow_S R}
+    \end{equation}
+
+    \item Or they can be the result of a conjunciton.
+    \begin{equation}
+        \label{eq:leadsto-disjunctivity}
+        \infer{P \lor Q \hookrightarrow_S R}{P \hookrightarrow_S R & Q \hookrightarrow_S R}
+    \end{equation}
+\end{itemize}
+
+\begin{code}
+    \>[2]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaInductiveConstructor{FromEnsures}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{Ensures}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\<%
+    \\
+    %
+    \>[4]\AgdaInductiveConstructor{Transitivity}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\<%
+    \\
+    %
+    \>[4]\AgdaInductiveConstructor{Disjunctivity}\AgdaSpace{}%
+    \AgdaSymbol{:}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaSymbol{((}\AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaGeneralizable{S}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaGeneralizable{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▽}}\AgdaSpace{}%
+    \AgdaGeneralizable{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaGeneralizable{R}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↪[\AgdaUnderscore{}]\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}↪[\AgdaUnderscore{}]\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaDatatype{Inevitable}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Invariant:}
+A $P$ predicate is invariant in an $I = (s_0,S)$ initialized program with the $Q$ initial predicate if $Q$ implies $P$, so it must be true at the beginning, and being in the truth set of $P$ guarantees that we will forever stay there. 
+\begin{equation}
+    Invariant_I(Q, P) = (BSP(s_0, Q) \Rrightarrow \sem{P}{a} \, \land \, \sem{P}{a} \Rightarrow CBLWP(S, P))
+\end{equation}
+\begin{code}
+    \>[2]\AgdaFunction{Invariant}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Invariant}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSymbol{@(}\AgdaBound{s₀}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{((}\AgdaFunction{BSP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{s₀}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{))}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaFunction{CBLWP}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSymbol{))}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈inv[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈inv[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈inv[}}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{/}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Invariant}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaBound{P}\<%
+\end{code}
+    
+\newpage
+
+Here we also introduce the so-called \textit{"Strongest Invariant"} assertion, which represents the smallest subset of the state space and is defined as the conjunction of all other invariants. % It is given as as assertion.
+\begin{code}
+    \>[2]\AgdaFunction{INVARIANT}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{INVARIANT}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{λ}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{∀\{}\AgdaBound{P}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Invariant}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
+    \AgdaBound{P}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{INV[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{INV[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{INV[}}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{/}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{INVARIANT}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Always True:}
+A predicate is called always true, if it is implied by the strongest invariant. This means that we can rely on never leaving the truth set of these type of predicates, but they are not necessarily invariants themselves, since they can be weaker (meaning that they have a bigger truth set) and thus contain states, which are essentially inaccessible, but would lead to the chance of leaving the truth set of the predicate.
+\begin{code}
+    \>[2]\AgdaFunction{True}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{True}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{INVARIANT}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈true[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈true[\AgdaUnderscore{}/\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈true[}}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{/}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{True}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaBound{Q}\<%
+\end{code}
+
+\paragraph{Fixed Point:}
+We call a certain state ($st$) a fixpoint of a program, if no execution of a conditional batch can further change the values of variables, because either their conditions are not satisfied, or their assignments all result in equal values being reassigned, which means that execution can be halted. Since the set of fixpoints is a subset of the state space, it is given here as an assertion. (Note: $\varphi_S$ can also be used as a shorter notation of $Fixpoint_S$.)
+\begin{equation}
+    Fixpoint_S(st) = \forall s_i \in S : \sem{s_i}{cb}(st) = st
+\end{equation}
+\begin{code}
+    \>[2]\AgdaFunction{Fixpoint}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Fixpoint}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{λ}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{cb}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{cb}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
+    \AgdaBound{st}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{S}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{φ[\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{φ[\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Assertion}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{φ[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Fixpoint}\AgdaSpace{}%
+    \AgdaBound{S}\<%
+\end{code}
+
+The specification statement based on this assertion is capable of describing constraints about the state in which a program can end by giving predicates which must be fulfilled by every state in the set of fixed points.
+\begin{equation}
+    FIXPOINT_S(P) = Fixpoint_S \Rrightarrow \sem{P}{a}
+\end{equation}
+\begin{code}
+    \>[2]\AgdaFunction{FIXPOINT}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{FIXPOINT}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Fixpoint}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈FP[\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈FP[\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈FP[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{FIXPOINT}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\<%
+\end{code}
+
+\paragraph{Guaranteed Termination:}
+A predicate guarantees the termination of a program (by which we mean reaching a fixed point), if there exists another predicate, to which it inevitably leads and the truth set of that predicate is subset of the set of fixed points.
+(This could later be simplified by adding a variation of the Inevitable statement that accepts assertions as its parameters.)
+\begin{equation}
+    Termination_S(P) = \exists Q \in Predicate : P \hookrightarrow_S Q \land \sem{Q}{a} \Rrightarrow Fixpoint(S)
+\end{equation}
+\begin{code}
+    \>[2]\AgdaFunction{Termination}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Termination}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaRecord{Σ}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaFunction{Fixpoint}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSymbol{))}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈TERM[\AgdaUnderscore{}]}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∈TERM[\AgdaUnderscore{}]}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{Statement}\<%
+    \\
+    %
+    \>[2]\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈TERM[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Termination}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaBound{P}\<%
+\end{code}
+
+% \subsection{Compositions}
+\subsection{Constructions}
+
+Among the possible program constructions we have so far only formalized the simplest one, the union, that is also most likely to be useful, since it describes multiple programs working on a common, shared state space, which is a common occurrence in larger software systems.
+
+\subsubsection{Union}
+
+In a mathematical sense, the union of two parallel programs can simply be constructed by taking the union of the sets of conditional batches they are represented by. (Their initialized counterparts are more complicated.) % $S = S_{1} \cup S_{2}$
+
+\begin{equation}
+  S = S_{1} \cup S_{2}
+\end{equation}
+
+Because of the modification of the original model, that resulted in removing $s_0$ from the core \textbf{ParallelProgram} definition, we can simply just define the formal union of the parallel programs as their concatenation, since they are essentially just lists of conditional batches. This might result in the duplication of certain batches, but it does not affect the overall semantics, since impartial scheduling (see Definition \ref{def:impartial-scheduling}) still applies.
+
+\begin{code}
+    \>[2]\AgdaFunction{Union}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaBound{S₂}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Union}\AgdaSpace{}%
+    \AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaBound{S₂}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{++}}\AgdaSpace{}%
+    \AgdaBound{S₂}\AgdaSymbol{)}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    %
+    \>[2]\AgdaKeyword{infixr}\AgdaSpace{}%
+    \AgdaNumber{4}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∪\AgdaUnderscore{}}}\<%
+    \\
+    %
+    \>[2]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∪\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaBound{S₂}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{ParallelProgram}\<%
+    \\
+    %
+    \>[2]\AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∪}}\AgdaSpace{}%
+    \AgdaBound{S₂}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Union}\AgdaSpace{}%
+    \AgdaBound{S₁}\AgdaSpace{}%
+    \AgdaBound{S₂}\<%
+\end{code}
+
+\subsection{The notion of conformance to a specification}
+
+Basically everything that would be necessary for proving conformance to a specification is in place, but due to time constraints, it has not been discussed yet. The constructions that would support such a procedure are divided into two parts. The first one is the concepts of a \textbf{Specification} record, which contains all the constraints and the known initialization properties under which those would need to be verified.
+
+% \newpage % TODO
+
+\begin{code}
+    \>[2]\AgdaKeyword{record}\AgdaSpace{}%
+    \AgdaRecord{Specification}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaKeyword{constructor}\AgdaSpace{}%
+    \AgdaInductiveConstructor{mkSpecification}\<%
+    \\
+    %
+    \>[4]\AgdaKeyword{field}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaField{unless}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaField{ensures}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaField{inevitable}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaDatatype{Predicate}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[6]\AgdaField{fixpoint}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    %
+    \>[6]\AgdaField{termination}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    %
+    \>[6]\AgdaField{initial}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    %
+    \>[6]\AgdaField{invariant}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{List}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+\end{code}
+
+The second part is the \textbf{Conforms} functions, which accepts a \textbf{Specification} and a \textbf{ParallelProgram} as arguments and combines them into a type, that claims that the given program conforms to the specification. If an instance for the generated type can be constructed, the conformance can be considered to be verified.
+
+\begin{code}
+    \>[2]\AgdaFunction{Conforms}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaRecord{Specification}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaFunction{InitializedProgram}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\<%
+    \\
+    %
+    \>[2]\AgdaFunction{Conforms}\AgdaSpace{}%
+    \AgdaBound{specification}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSymbol{@(}\AgdaBound{s₀}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{=}\<%
+    \\
+    \>[2][@{}l@{\AgdaIndent{0}}]%
+    \>[4]\AgdaKeyword{let}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaBound{INIT}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Predicate}\<%
+    \\
+    %
+    \>[6]\AgdaBound{INIT}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{Data.List.foldr}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaBound{acc}\AgdaSpace{}%
+    \AgdaBound{curr}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{curr}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{△}}\AgdaSpace{}%
+    \AgdaBound{acc}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaInductiveConstructor{TRUE}\AgdaSpace{}%
+    \AgdaFunction{initial}\<%
+    \\
+    %
+    \>[4]\AgdaKeyword{in}\<%
+    \\
+    \>[4][@{}l@{\AgdaIndent{0}}]%
+    \>[6]\AgdaSymbol{(}\<%
+    \\
+    \>[6][@{}l@{\AgdaIndent{0}}]%
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{▷[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{unless}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaFunction{×}}\<%
+    \\
+    %
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↦[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{ensures}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaFunction{×}}\<%
+    \\
+    %
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{↪[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaBound{Q}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{inevitable}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaFunction{×}}\<%
+    \\
+    %
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{φ[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⇛}}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{⟧a}}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{fixpoint}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaFunction{×}}\<%
+    \\
+    %
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈TERM[}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{termination}\<%
+    \\
+    %
+    \>[8]\AgdaOperator{\AgdaFunction{×}}\<%
+    \\
+    %
+    \>[8]\AgdaDatatype{All}\AgdaSpace{}%
+    \AgdaSymbol{(λ}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{P}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{∈inv[}}\AgdaSpace{}%
+    \AgdaBound{I}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{/}}\AgdaSpace{}%
+    \AgdaBound{INIT}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{]}}\AgdaSpace{}%
+    \AgdaSymbol{\})}\AgdaSpace{}%
+    \AgdaFunction{invariant}\<%
+    \\
+    %
+    \>[6]\AgdaSymbol{)}\<%
+    \\
+    \>[6][@{}l@{\AgdaIndent{0}}]%
+    \>[8]\AgdaKeyword{where}\AgdaSpace{}%
+    \AgdaKeyword{open}\AgdaSpace{}%
+    \AgdaModule{Specification}\AgdaSpace{}%
+    \AgdaBound{specification}\<%
+\end{code}

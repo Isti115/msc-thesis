@@ -12,20 +12,326 @@ As an example, given two statements, $A$ and $B$, the function with the type sig
 There are several existing programming languages that implement type theories, thus are capable of describing theorems and constructing proofs for them. They achieve this using dependent typesystems, in which types can not only be parametrized over other types, but also values. Out of these we tried out the three most popular alternatives.
 
 \subsubsection{Idris}
-Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edvin Brady with the aim of creating a general purpose language.
+Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edwin Brady with the aim of creating a general purpose language.
 
 We first tried implementing our formalisation in Idris, as it seemed to be the freshest language. It also has good support for every major operating system, wider editor compatibility than the alternatives and in some sense a more modern standard library, which is easier to discover due to the in our opinion better documentation.
 
-Under certain circumstances the implicit parameter handling of Idris seemed to better for us than that of Agda, and there are constructs, such as for example heterogeneous vectors that are easier to implement in Idris, because it uses cumulative universes, but
-after reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages. It also lacks Unicode support, with perfectly valid and understandable reasons outlined by Edvin Brady, but it also makes the code a lot more verbose and harder to integrate with the original notation.
+Under certain circumstances the implicit parameter handling of Idris seemed to better for us than that of Agda, and there are constructs, such as for example heterogeneous vectors that are easier to implement in Idris, because it uses cumulative universes, but after reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages. It also lacks Unicode support, with perfectly valid and understandable reasons outlined by Edvin Brady, but it also makes the code a lot more verbose and harder to integrate with the original notation.
 
-% ?Idris also has heterogeneous vectors which are harder to create in Agda due to its implementation of universe polymorphism.?
-
-
-\subsubsection{Agda}
-Agda is a dependently typed programming language that was originally described in the PhD thesis of Ulf Norell\cite{norell:thesis} and later completely rewritten for a second version. It mainly follows the style of Haskell.
-
-Its conventions of highly relying on Unicode symbols for identifiers helped in staying similar to the original notation of the curriculum of the subject.
+(Idris also has some support for writing proofs using tactics, but it has been deprecated in favor of a reflection based approach.)
 
 \subsubsection{Coq}
-The Coq proof assistant\cite{} is the earliest of the three, even predating Agda by ten years. (The initial version was released on the 1st of May, 1989.) It is really well established and focuses mainly on creating proofs using a tactic language instead of using regular functional programming constructs.
+The Coq proof assistant\cite{the_coq_development_team_2020_3744225}\cite{Coq} is the earliest of the three, even predating Agda by ten years. Its development began at the French Institute for Research in Computer Science and Automation, the initial version was released on the 1st of May, 1989. It is really well established and serves as a foundation for many formalization projects, some of which were already discussed in Chapter \ref{sec:related} (Related Works). 
+
+It uses the syntax of OCaml for its definition language \textit{(Gallina)} and has a separate language for writing proofs using tactics instead of regular functional programming constructs. This separation might seem valuable in certain situations, but having to deal with two different types of code side by side did not seem ideal for this project. While support for Unicode characters is present, the conventions usually do not really utilize them.
+
+\subsubsection{Agda}
+Agda\cite{agda} is a dependently typed programming language that was originally described in the PhD thesis of Ulf Norell\cite{norell:thesis} and later completely rewritten for a second version. It is really similar to Idris (in fact they are both really similar to Haskell) syntactically, but is a lot more mature language with more tried and trusted principles, a broader range of available sources and a much larger user base.
+
+The fact that it uses the same language for describing the components and behavior of the discussed model as for making statements about it and construction proofs for them results in an in out opinion cleaner code overall.
+
+Its conventions of highly relying on Unicode symbols for the naming of identifiers, such as functions and data types helped in staying similar to the original notation of the curriculum of the subject.
+
+Another factor that was taken into consideration while making the choice was the fact that Agda has already been taught at our university and there are multiple people with high levels of knowledge of it, so in this environment it seemed optimal for collaborating with others on the project.
+
+A brief introduction to Agda is included here, for a more thorough guide see \cite{bove2009brief} or \cite{norell2008dependently}.
+
+Let us begin by introducing the inductive type of the natural numbers. Instead of the usual set-theory way of describing the constraints that define a certain set, in Agda we use a constructive approach, by listing all the ways in which elements of a certain type can be created. These are called constructors, which often represent the underlying axioms of a model. The natural numbers have two of these rules, one states that zero is a number while the other claims that every natural number has a successor, which is a natural number as well.
+
+\begin{code}
+    \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\<%
+    \\
+    %
+    \>[2]\AgdaInductiveConstructor{suc}%
+    \>[7]\AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\<%
+\end{code}
+
+Now, that we have defined a datatype, the implementation of addition is shown as an example for a function. In a very similar way to what one might see for example in Haskell, inductive types can be processed using pattern matching.
+
+\begin{code}
+    \>[0]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}+\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\<%
+    \\
+    \>[0]\AgdaInductiveConstructor{zero}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{m}\<%
+    \\
+    \>[0]\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSymbol{)}\<%
+\end{code}
+
+For easier handling and the illustration of different ways to do so, we also define some constant numbers to be used later. The alternative definitions given in the comments would have the same results.
+
+\begin{code}
+    \>[0]\AgdaFunction{one}\AgdaSpace{}%
+    \AgdaFunction{two}\AgdaSpace{}%
+    \AgdaFunction{three}\AgdaSpace{}%
+    \AgdaFunction{four}\AgdaSpace{}%
+    \AgdaFunction{five}\AgdaSpace{}%
+    \AgdaFunction{six}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\<%
+    \\
+    \>[0]\AgdaFunction{one}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\<%
+    \\
+    \>[0]\AgdaFunction{two}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaComment{-- or alternatively: (suc one)}\<%
+    \\
+    \>[0]\AgdaFunction{three}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaFunction{two}\AgdaSpace{}%
+    \AgdaComment{-- or alternatively: suc (suc (suc zero))}\<%
+    \\
+    \>[0]\AgdaFunction{four}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaFunction{three}\<%
+    \\
+    \>[0]\AgdaFunction{five}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaFunction{two}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaFunction{three}\AgdaSpace{}%
+    \AgdaComment{-- or alternatively: (suc four)}\<%
+    \\
+    \>[0]\AgdaFunction{six}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{suc}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{two}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaFunction{three}\AgdaSymbol{)}\<%
+\end{code}
+
+These previous definitions together can be used to describe a property of natural numbers which states that a certain number is even. This property is given as a special function, that maps each natural number to a type representing the statement, for which giving an instance to that type serves as a proof. The first constructor simply states that zero is an even number, while the second one formalizes the fact that any number constructed by adding two to an already known even number becomes also even itself. This is the first definition where dependent typing comes into play, as the resulting type of the second constructor is not constant, but depends on the type of the parameters given to it. (The comment shows an equivalent alternative to the second constructor.)
+
+\begin{code}
+    \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaInductiveConstructor{even-0}%
+    \>[10]\AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\<%
+    \\
+    %
+    \>[2]\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{two}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSymbol{)}\<%
+    \\
+    %
+    \>[2]\AgdaComment{-- even-2+ : \{n : ℕ\} → Even n → Even (suc (suc n))}\<%
+\end{code}
+
+As a few examples on how to utilize these constructors, here we present the proofs for some known constant even numbers. Notice, that in the proof for six, we utilize the proof of two. This ability to reuse smaller parts greatly helps in the construction of bigger proofs.
+
+\begin{code}
+    \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaInductiveConstructor{zero}\<%
+    \\
+    \>[0]\AgdaFunction{even-zero}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-0}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaFunction{two}\<%
+    \\
+    \>[0]\AgdaFunction{even-two}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-0}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaFunction{six}\<%
+    \\
+    \>[0]\AgdaFunction{even-six}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{even-two}\AgdaSymbol{))}\<%
+\end{code}
+
+We also show the implementations with some examples for a few of the usual logical expressions, such as the disjunction. It has two constructors, since it can be proven by showing that either the left or the right side statement holds.
+
+\begin{code}
+    \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{\AgdaUnderscore{}⊎\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[0][@{}l@{\AgdaIndent{0}}]%
+    \>[2]\AgdaInductiveConstructor{inj₁}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{x}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+    \AgdaBound{B}\<%
+    \\
+    %
+    \>[2]\AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{y}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaBound{B}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaBound{A}\AgdaSpace{}%
+    \AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+    \AgdaBound{B}\<%
+\end{code}
+
+To define negation, we first need the introduce the empty type, which essentially represents a false statement, by having no constructors, thus no means, by which an instance could be constructed for it. Afterwards we can represent negation as a function that maps to the empty type from a certain other type, since by constructing an instance for such a function we can show that the type given as parameter must be empty as well. This is due to the fact that if there existed an instance for that type, we could create an element for the empty type by applying this function to it, which we know is impossible, since by definition no instance exists for the empty type.
+
+\begin{code}
+    \>[0]\AgdaKeyword{data}\AgdaSpace{}%
+    \AgdaDatatype{⊥}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaKeyword{where}\<%
+    \\
+    \>[0]\AgdaComment{-- No constructors given, this type is empty.}\<%
+    \\
+    %
+    \\[\AgdaEmptyExtraSkip]%
+    \>[0]\AgdaOperator{\AgdaFunction{¬\AgdaUnderscore{}}}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaPrimitiveType{Set}\<%
+    \\
+    \>[0]\AgdaOperator{\AgdaFunction{¬}}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{S}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{⊥}\<%
+\end{code}
+
+As an example for the usage of negation we present a proof for the fact that five is not even. By unfolding the previous definition, we get that this can be done by implementing a function that maps to the empty type. Since an instance for that type cannot be returned, we instead need to show that the parameter we have (\verb|even-five|) can not exist in the first place. To do this, we can rely on the pattern matching powers of Agda. By either interactively or manually pattern matching on \verb|even-five|, we can see what constructors it could have possibly been created with. Since the definition of \verb|five = suc (suc (suc (suc (suc zero))))| does not match the pattern \verb|zero|, that would be required for it to be created by \verb|even-0|, we can omit the inclusion of that case, we only have to go forward with the \verb|even-2+| constructor, in which case it needed to be created from a proof claiming three is even. In a similar way we can take one more step, to arrive at a point where we supposedly have an instance (\verb|even-one|) for the type \verb|Even one|. At that point, none of the constructors for \verb|Even| can be matched, since \verb|one = suc zero| does not match any of the possible patterns (\verb|zero| or \verb|suc (suc _)|), this it can be replaced by an absurd pattern, for which we do not need to provide a right hand side.
+
+\begin{code}
+    \>[0]\AgdaFunction{not-even-five}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{¬}}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaFunction{five}\<%
+    \\
+    \>[0]\AgdaComment{-- not-even-five even-five = ?}\<%
+    \\
+    \>[0]\AgdaComment{-- not-even-five (even-2+ even-three) = ?}\<%
+    \\
+    \>[0]\AgdaComment{-- not-even-five (even-2+ (even-2+ even-one)) = ?}\<%
+    \\
+    \>[0]\AgdaFunction{not-even-five}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{()))}\<%
+\end{code}
+
+Lastly, after the previous illustrations dealing with constant numbers, we give an example for a more general proof. The statement claims that the sum of two even numbers is always even. This can be shown by pattern matching on the constructor of the first proof and recursively \textit{"calling"} the theorem again, when needed. This is possible, where Agda can determine that the argument of the function is structurally decreasing, thus the recursion will eventually reach its base case and terminate.
+
+\begin{code}
+    \>[0]\AgdaFunction{even-plus-even}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaSymbol{\{}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSpace{}%
+    \AgdaSymbol{:}\AgdaSpace{}%
+    \AgdaDatatype{ℕ}\AgdaSymbol{\}}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaBound{n}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSpace{}%
+    \AgdaSymbol{→}\AgdaSpace{}%
+    \AgdaDatatype{Even}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaBound{n}\AgdaSpace{}%
+    \AgdaOperator{\AgdaFunction{+}}\AgdaSpace{}%
+    \AgdaBound{m}\AgdaSymbol{)}\<%
+    \\
+    \>[0]\AgdaFunction{even-plus-even}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-0}\AgdaSpace{}%
+    \AgdaBound{em}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaBound{em}\<%
+    \\
+    \>[0]\AgdaFunction{even-plus-even}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaBound{en}\AgdaSymbol{)}\AgdaSpace{}%
+    \AgdaBound{em}\AgdaSpace{}%
+    \AgdaSymbol{=}\AgdaSpace{}%
+    \AgdaInductiveConstructor{even-2+}\AgdaSpace{}%
+    \AgdaSymbol{(}\AgdaFunction{even-plus-even}\AgdaSpace{}%
+    \AgdaBound{en}\AgdaSpace{}%
+    \AgdaBound{em}\AgdaSymbol{)}\<%
+\end{code}
+
+The remaining logical expressions, such as conjunction or existence are not presented here, but they can be implemented using simple pairs or dependent pairs respectively. They are provided for our formalization by the Agda Standard Library\cite{agda-stdlib}.

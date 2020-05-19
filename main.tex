@@ -76,17 +76,17 @@
         {Ű}{{\H{U}}}1
     } %% Customization of listings env., to enable non-English accents.
 
-\lstset{
-   frame=single,
-   basicstyle=\small,
-   language=Erlang,
-   numbers=left,
-   firstnumber=1,
-   numberfirstline=true,
-%  basicstyle=\ttfamily,
-%  columns=fullflexible,
-%   keepspaces=true,
-} %% Customization of listings environment
+% \lstset{
+%   frame=single,
+%   basicstyle=\small,
+%   language=Erlang,
+%   numbers=left,
+%   firstnumber=1,
+%   numberfirstline=true,
+% %  basicstyle=\ttfamily,
+% %  columns=fullflexible,
+% %   keepspaces=true,
+% } %% Customization of listings environment
 
 
 %%%%
@@ -169,16 +169,83 @@
 
 \usepackage{proof}
 \usepackage{stmaryrd}
+\usepackage{wasysym}
 % \usepackage{mathtools}
-%% \usepackage{minted}
+\usepackage{minted}
 % \usepackage{fontspec}
+\usepackage{agda}
 
-% \setmonofont[Scale=0.90,
-% BoldFont=djvusansmono.ttf,
-% ItalicFont=djvusansmono.ttf,
-% BoldItalicFont=djvusansmono.ttf
-% % Color={0019D4}
-% ]{djvusansmono.ttf}
+\usepackage{multicol}
+
+\usepackage{fontspec,unicode-math}
+% \setmainfont{XITS}
+% \setmonofont{XITS Mono}
+% \setmathfont{XITS Math}
+% \setsansfont{XITS}
+% \setmainfont[
+%  BoldFont={XITS Bold},
+%  ItalicFont={XITS Italic},
+%  BoldItalicFont={XITS Bold Italic}
+% ]{XITS}
+
+% \setsansfont[
+%  BoldFont={XITS Bold}, 
+%  ItalicFont={XITS Italic},
+%  BoldItalicFont={XITS Bold Italic}
+% ]{XITS}
+
+\setsansfont[Scale=0.85,Path=fonts/,
+BoldFont=DejaVu Sans Mono Bold Nerd Font Complete.ttf,
+ItalicFont=DejaVu Sans Mono Oblique Nerd Font Complete.ttf,
+BoldItalicFont=DejaVu Sans Mono Bold Oblique Nerd Font Complete.ttf
+% Color={0019D4}
+]{DejaVu Sans Mono Nerd Font Complete.ttf}
+
+\setmonofont[Scale=0.85,Path=fonts/,
+BoldFont=DejaVu Sans Mono Bold Nerd Font Complete Mono.ttf,
+ItalicFont=DejaVu Sans Mono Oblique Nerd Font Complete Mono.ttf,
+BoldItalicFont=DejaVu Sans Mono Bold Oblique Nerd Font Complete Mono.ttf
+% Color={0019D4}
+]{DejaVu Sans Mono Nerd Font Complete Mono.ttf}
+
+% \usepackage{listings}
+% \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,extendedchars=true}
+
+\usepackage{newunicodechar}
+% \newunicodechar{₀}{\textsubscript0}
+% \newunicodechar{₁}{\textsubscript1}
+% \newunicodechar{₂}{\textsubscript2}
+% \newunicodechar{₃}{\textsubscript3}
+% \newunicodechar{₄}{\textsubscript4}
+% \newunicodechar{₅}{\textsubscript5}
+% \newunicodechar{₆}{\textsubscript6}
+% \newunicodechar{₇}{\textsubscript7}
+% \newunicodechar{₈}{\textsubscript8}
+% \newunicodechar{₉}{\textsubscript9}
+
+% \newunicodechar{⌝}{\ensuremath{\neg}}
+% \newunicodechar{△}{\ensuremath{\triangle}}
+% \newunicodechar{△}{\ensuremath{\bigtriangleup}}
+% \newunicodechar{▽}{\ensuremath{\nabla}}
+% \newunicodechar{▽}{\ensuremath{\bigtriangledown}}
+% \newunicodechar{}{\ensuremath{}}
+
+% \newunicodechar{⊢}{\ensuremath{\vdash}}
+\newunicodechar{⊩}{\ensuremath{\Vdash}}
+\newunicodechar{⊪}{\ensuremath{\Vvdash}}
+\newunicodechar{⊨}{\ensuremath{\vDash}}
+\newunicodechar{⊫}{\ensuremath{\VDash}}
+
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{⇐}{\ensuremath{\Leftarrow}}
+\newunicodechar{⇛}{\ensuremath{\Rrightarrow}}
+\newunicodechar{⇚}{\ensuremath{\Lleftarrow}}
+
+% \newunicodechar{▷}{\ensuremath{\rhd}}
+\newunicodechar{↦}{\ensuremath{\mapsto}}
+\newunicodechar{↣}{\ensuremath{\rightarrowtail}}
+\newunicodechar{↪}{\ensuremath{\hookrightarrow}}
+% \newunicodechar{}{\ensuremath{}}
 
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -247,7 +314,18 @@
 
 %%%
 % Questions:
-%
+% + Hogyan kell korrektül megfogalmazni, hogy az is nagy szerepet játszott az Agda választásában, hogy Ambrus abban tud a legtöbbet segíteni?
+% + Mathematical foundation: determinisztikusan csináljuk, ugye? (HZ van, ahol ezt, van ahol azt használja, lásd: puma.pdf logikai függvény vs jegyzet) Plusz kellenek ezek a végtelen állapotlisták? --> Footnote, the model is more general and uses relations, we work with functions.
+% A chapter-eknél is elvárás, hogy egy cím alatt ne következzen egyből másik cím?
+% + Próbáltam a subject részt direkt máshogy leírni, mint HZ cikkeiben van, de ettől csak sokkal kavarosabb lett...
+% + TODO: Why invP instead of P \in inv?
+% + Amúgy miért kell ennyire általánosan? Miért nem lehet |F(b)| = 1 mindig (tehát függvény)?
+% + A background-ban a subject-hez azokat a részket is leírjam, amik még nincsenek implementálva?
+% + Figures / Numbers? But what if they are separated line by line?
+% + Full source code at the end in appendix? What should go inline?
+% + "Ne a kód legyen kommentelve, hanem a magyarázat illusztrálva" arány?
+% + PSP actual meaning, FIGURE!
+% + Amúgy lehet csatornák csatornájáról beszélni? Plusz mi történik lov([]) és lorem([]) esetén?
 %%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -267,11 +345,9 @@
 % \input{examples.tex}
 
 \input{related.tex}
+\label{chp:related}
 
-% \input{background.tex}
-\chapter{Background}
-\input{subject.tex}
-\input{typetheory.tex}
+\input{background.tex}
 
 \input{method.tex}
 
@@ -282,11 +358,12 @@
 \chapter{Acknowledgements}
 \section{EFOP}
 
-This project has been funded by the European .....
+{\Large The author was supported by the European Union, co-financed by the European Social Fund (EFOP-3.6.3-VEKOP-16-2017-00002).}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Bibliography starts here %%
 
+\newpage
 \addcontentsline{toc}{chapter}{Bibliography}
 
 %% There's more than one way to keep track of your citations.
@@ -296,7 +373,6 @@ This project has been funded by the European .....
 %% to use this style.
   
 % \input{biblio.tex}
-
 
 %% Another way is to use bibtex. The following command will process and 
 %% include the citations listed in biblio.bib. The advantage of bibtex is that
@@ -311,6 +387,9 @@ This project has been funded by the European .....
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendices starts here %%
 
-\addtocontents{toc}{\setcounter{tocdepth}{0}}
+% \addtocontents{toc}{\setcounter{tocdepth}{0}}
 \input{appendix.tex}
 \end{document}
+
+% TODO: Agda, Formalization => Magyarázat, type theory -> logikai összekötők
+% DONE? Cikk -> related works, Cite Fothi matemathical approach to programming
