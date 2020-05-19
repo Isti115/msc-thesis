@@ -14,7 +14,7 @@ There are several existing programming languages that implement type theories, t
 \subsubsection{Idris}
 Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edwin Brady with the aim of creating a general purpose language.
 
-We first tried implementing our formalisation in Idris, as it seemed to be the freshest language. It also has good support for every major operating system, wider editor compatibility than the alternatives and in some sense a more modern standard library, which is easier to discover due to the in our opinion better documentation.
+We first tried implementing our formalization in Idris, as it seemed to be the freshest language. It also has good support for every major operating system, wider editor compatibility than the alternatives and in some sense a more modern standard library, which is easier to discover due to the in our opinion better documentation.
 
 Under certain circumstances the implicit parameter handling of Idris seemed to better for us than that of Agda, and there are constructs, such as for example heterogeneous vectors that are easier to implement in Idris, because it uses cumulative universes, but after reaching a certain complexity, the type checker of Idris unfortunately turned out to be too slow, so we moved on to other languages. It also lacks Unicode support, with perfectly valid and understandable reasons outlined by Edvin Brady, but it also makes the code a lot more verbose and harder to integrate with the original notation.
 
