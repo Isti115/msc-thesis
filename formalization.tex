@@ -90,7 +90,7 @@ Since our formalization does not follow the book of the subject exactly, we pres
         \AgdaKeyword{where}\<%
     \end{code}
     \begin{itemize}
-        \item The \verb|Const| constructor creates a constant expression by directly giving the agda representation of its value.
+        \item The \verb|Const| constructor creates a constant expression by directly giving the Agda representation of its value.
         \begin{code}
             % \>[2][@{}l@{\AgdaIndent{0}}]%
             \>[4]\AgdaInductiveConstructor{Const}\AgdaSpace{}%
@@ -154,7 +154,7 @@ Since our formalization does not follow the book of the subject exactly, we pres
             \AgdaBound{A}\AgdaSymbol{)}\<%
         \end{code}
         
-        \item The \verb|Var| constructor creates an expression, the results of which is the value of a given variable in the state it is evaluated in.
+        \item The \verb|Var| constructor creates an expression, the result of which is the value of a given variable in the state it is evaluated in.
         \begin{code}
             \>[4]\AgdaInductiveConstructor{Var}\AgdaSpace{}%
             \AgdaSymbol{:}\AgdaSpace{}%
@@ -378,7 +378,7 @@ Since our formalization does not follow the book of the subject exactly, we pres
     
     \item \verb|Predicate| - The constructors of this inductively defined type describe the possible circumstances, to which we can later constrain the execution of conditional instructions. Their short descriptions are given in comments. By defining this in this manner, instead of simply relying on general logical functions that map from states to Boolean values, we can achieve much cleaner proofs, by actually getting the information we have in a way that can be used for reasoning instead of having to extract it from the parameters every time individually. 
     
-    This inductive definition was also crucial to enable the decidability of assertions, which were created from predicates, (see \verb|assertionDecidability| in Appendix \ref{apx:codes}), by enabling pattern matching on the predicates instead of representing them as generic logical functions, which in turn made the formalization of De Morgan's law of union possible.
+    This inductive definition was also crucial to enable the decidability of assertions, which were created from predicates (see \verb|assertionDecidability| in Appendix \ref{apx:codes}), by enabling pattern matching on the predicates instead of representing them as generic logical functions, which in turn made the formalization of De Morgan's law of union possible.
     \begin{code}
         \>[2]\AgdaKeyword{data}\AgdaSpace{}%
         \AgdaDatatype{Predicate}\AgdaSpace{}%
@@ -631,7 +631,7 @@ The following list contains the semantic operators that give the previously defi
         \AgdaBound{p}\<%
     \end{code}
 
-    \item $\sem{\_}{c}$ - Turns predicates into conditions that can be evaluated for a given state. Essentially turns a predicated into a function from states to Boolean logical values.
+    \item $\sem{\_}{c}$ - Turns predicates into conditions that can be evaluated for a given state. Essentially turns a predicate into a function from states to Boolean logical values.
     % ($\sem{\_}{c} : Predicate \to State \to Condition$) where $Condition = State \to Bool$
     \begin{code}
         \>[2]\AgdaFunction{Condition}\AgdaSpace{}%
@@ -654,9 +654,9 @@ The following list contains the semantic operators that give the previously defi
     \end{code}
 \end{itemize}
 
-Similarly, there are also operators for handling Instructions.
+Similarly, there are also operators for handling instructions.
 \begin{itemize}
-    \item $\sem{\_}{pi}$ - This operator describes the semantics of a parallel instruction, meaning an instruction that is meant to be executed concurrently with other instructions. It has an two parameters, the state, based on which the expressions occurring in the instruction should be evaluated, and the state function that should be updated to reflect the effects of the instruction. This separation is necessary to properly represent the semantics of concurrency, as the instructions are supposed to be treated as if they were executed at the same time, thus the results of their expressions need to be based on a common original state.
+    \item $\sem{\_}{pi}$ - This operator describes the semantics of a parallel instruction, meaning an instruction that is meant to be executed concurrently with other instructions. It has two parameters, the state, based on which the expressions occurring in the instruction should be evaluated, and the state function that should be updated to reflect the effects of the instruction. This separation is necessary to properly represent the semantics of concurrency, as the instructions are supposed to be treated as if they were executed at the same time, thus the results of their expressions need to be based on a common original state.
     \begin{code}
         \>[2]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧pi}}\AgdaSpace{}%
         \AgdaSymbol{:}\AgdaSpace{}%
@@ -740,7 +740,7 @@ While these would already be sufficient, a few more type aliases were also creat
         \AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧il}}\<%
     \end{code}
     
-    \item \verb|ConditionalBatch| - A \verb|Batch| that is paired by a \verb|Pradicate| that represents the preceding conditions under which it should be executed.
+    \item \verb|ConditionalBatch| - A \verb|Batch| that is paired by a \verb|Predicate| that represents the preceding conditions under which it should be executed.
     \begin{code}
         \>[2]\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
         \AgdaSymbol{:}\AgdaSpace{}%
@@ -925,7 +925,7 @@ As an example for how parallel programs can be represented in the system describ
     BubbleSort_n = ( & \\
     %   & (TRUE \:,\: SKIP), \\
       & SKIP, \\
-      & \{ \, ( \, (a[i] > a[i+1])\:,\:(a[i],a[i+1]:= a[i+1],a[i] \, ) \; | \; i \in \{1,\dots,n-1\} \, \} \\
+      & \{ \, ( \, (a[i] > a[i+1]) \: , \: (a[i], a[i+1] := a[i+1], a[i]) \, ) \; | \; i \in \{1,\dots,n-1\} \, \} \\
     ) &
 \end{split}
 \end{align}
@@ -1458,7 +1458,7 @@ Since these cannot appear as conditions for instructions, nor can they always be
 % following constructions can be introduced based on the previous definitions:
 \begin{itemize}
     \item Weakest Precondition - The weakest precondition for a given predicate with respect to an instruction represents the function that only evaluates to a non-empty type for a certain state, if after executing that instruction the given predicate holds in the resulting state.
-    When applied to an entire parallel program, it represents the broadest possible subset of the state space, from which executing a single batches of the program definitely take us into the truth set of the given predicate, no matter which one we chose.
+    When applied to an entire parallel program, it represents the broadest possible subset of the state space, from which executing a single batch of the program definitely takes us into the truth set of the given predicate, no matter which one we chose.
     \begin{equation}
         WP(i , P) = \sem{P}{a} \circ \sem{i}{i}
     \end{equation}
@@ -1578,7 +1578,7 @@ Since these cannot appear as conditions for instructions, nor can they always be
     \end{equation}
     
     \item Strongest Postcondition - For a given condition and instruction the strongest postcondition gives the function that returns a type for a given state, which represents the existence of a starting state, in which the given condition is satisfied, and the execution of the given instruction results in the given state.
-    In its last variation it represents the smallest possibles subset of the state space, to which executing any single batch of the program can take it from the given starting state.
+    In its last variation it represents the smallest possible subset of the state space, to which executing any single batch of the program can take it from the given starting state.
     
     % after executing the instruction whether it was started from a state that satisfied the original condition.
     \begin{equation}
@@ -1605,16 +1605,16 @@ Since these cannot appear as conditions for instructions, nor can they always be
         \AgdaRecord{Σ}\AgdaSpace{}%
         \AgdaFunction{State}\AgdaSpace{}%
         \AgdaSymbol{(λ}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
         \AgdaBound{P}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
         \AgdaBound{i}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟧i}}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
         \AgdaBound{st}\AgdaSymbol{)}\<%
         \\
@@ -1641,16 +1641,16 @@ Since these cannot appear as conditions for instructions, nor can they always be
         \AgdaRecord{Σ}\AgdaSpace{}%
         \AgdaFunction{State}\AgdaSpace{}%
         \AgdaSymbol{(λ}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
         \AgdaBound{P}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
         \AgdaBound{b}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟧b}}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
         \AgdaBound{st}\AgdaSymbol{)}\<%
         \\
@@ -1677,16 +1677,16 @@ Since these cannot appear as conditions for instructions, nor can they always be
         \AgdaRecord{Σ}\AgdaSpace{}%
         \AgdaFunction{State}\AgdaSpace{}%
         \AgdaSymbol{(λ}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⊢}}\AgdaSpace{}%
         \AgdaBound{P}\AgdaSpace{}%
         \AgdaSymbol{→}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
         \AgdaBound{cb}\AgdaSpace{}%
         \AgdaOperator{\AgdaFunction{⟧cb}}\AgdaSpace{}%
-        \AgdaBound{st0}\AgdaSpace{}%
+        \AgdaBound{st₀}\AgdaSpace{}%
         \AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
         \AgdaBound{st}\AgdaSymbol{)}\<%
         \\
@@ -2298,7 +2298,7 @@ A predicate is called always true, if it is implied by the strongest invariant. 
 \end{code}
 
 \paragraph{Fixed Point:}
-We call a certain state ($st$) a fixpoint of a program, if no execution of a conditional batch can further change the values of variables, because either their conditions are not satisfied, or their assignments all result in equal values being reassigned, which means that execution can be halted. Since the set of fixpoints is a subset of the state space, it is given here as an assertion. (Note: $\varphi_S$ can also be used as a shorter notation of $Fixpoint_S$.)
+We call a certain state a fixed point (or fixpoint) of a program, if no execution of a conditional batch can further change the values of variables, because either their conditions are not satisfied, or their assignments all result in equal values being reassigned, which means that execution can be halted. Since the set of fixpoints is a subset of the state space, it is given here as an assertion. (Note: $\varphi_S$ can also be used as a shorter notation of $Fixpoint_S$.)
 \begin{equation}
     Fixpoint_S(st) = \forall s_i \in S : \sem{s_i}{cb}(st) = st
 \end{equation}
@@ -2404,7 +2404,7 @@ The specification statement based on this assertion is capable of describing con
 \end{code}
 
 \paragraph{Guaranteed Termination:}
-A predicate guarantees the termination of a program (by which we mean reaching a fixed point), if there exists another predicate, to which it inevitably leads and the truth set of that predicate is subset of the set of fixed points.
+A predicate guarantees the termination of a program (by which we mean reaching a fixed point), if there exists another predicate, to which it inevitably leads and the truth set of that predicate is a subset of the set of fixed points.
 (This could later be simplified by adding a variation of the Inevitable statement that accepts assertions as its parameters.)
 \begin{equation}
     Termination_S(P) = \exists Q \in Predicate : P \hookrightarrow_S Q \land \sem{Q}{a} \Rrightarrow Fixpoint(S)
@@ -2531,7 +2531,7 @@ Because of the modification of the original model, that resulted in removing $s_
 
 \subsection{The notion of conformance to a specification}
 
-Basically everything that would be necessary for proving conformance to a specification is in place, but due to time constraints, it has not been discussed yet. The constructions that would support such a procedure are divided into two parts. The first one is the concepts of a \textbf{Specification} record, which contains all the constraints and the known initialization properties under which those would need to be verified.
+Basically everything that would be necessary for proving conformance to a specification is in place, but due to time constraints, it has not been discussed yet. The constructions that would support such a procedure are divided into two parts. The first one is the concept of a \textbf{Specification} record, which contains all the constraints and the known initialization properties under which those would need to be verified.
 
 % \newpage % TODO
 
@@ -2598,7 +2598,7 @@ Basically everything that would be necessary for proving conformance to a specif
     \AgdaDatatype{Predicate}\<%
 \end{code}
 
-The second part is the \textbf{Conforms} functions, which accepts a \textbf{Specification} and a \textbf{ParallelProgram} as arguments and combines them into a type, that claims that the given program conforms to the specification. If an instance for the generated type can be constructed, the conformance can be considered to be verified.
+The second part is the \textbf{Conforms} function, which accepts a \textbf{Specification} and a \textbf{ParallelProgram} as arguments and combines them into a type, that claims that the given program conforms to the specification. If an instance for the generated type can be constructed, the conformance can be considered to be verified.
 
 \begin{code}
     \>[2]\AgdaFunction{Conforms}\AgdaSpace{}%

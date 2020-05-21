@@ -7,7 +7,7 @@ An abstract program as defined by this system can be thought of as an initializa
 
 \begin{definition}{Interleaving semantics}
 \label{def:interleaving-semantics}
-In a model that conforms to interleaving semantics, for every valid parallel execution, there also exists a linear execution path of the same instructions, that achieve equivalent results.
+In a model that conforms to interleaving semantics, for every valid parallel execution, there also exists a linear execution path of the same instructions, that achieves equivalent results.
 \end{definition}
 
 \begin{definition}{Impartial Scheduling}
@@ -39,7 +39,7 @@ One condition is said to imply another ($P \Rightarrow Q$) if its truth set is s
 
 Another specific kind of function that operates on states is the so called \textbf{state transition function}. It has the type signature of $A \to A$ and is used to describe the behavior of an instruction. In this model, we consider only a single kind of instruction, namely a generic type of assignment, which is defined in the following way. Given a function for every variable index of the state space, that maps from the entire state space to the type value set of that given variable ($\forall i \in \{1..n\} : F_i : A \to A_i$), combining these into a single function $F = (F_1, \ldots F_n)$ we get a state transition function. Semantically speaking, it describes a parallel assignment, where each variable can have a formula, that may depend on all the other variables (or itself as well), these then are evaluated in the same state and get their new values assigned concurrently to produce a new, updated state.
 
-Such an assignment can be made conditional by pairing it with a logical function. By doing so, we alter its state transition function in a way, that it only applies the changes to the state, if its condition is fulfilled (meaning, that the current state is in its truth set), otherwise it acts as an identity function. With mathematical notation, given $\pi : A \to \mathbb{B}$ as a condition and $F : A -> A$ as an assignment, we get the following conditional state transition function:
+Such an assignment can be made conditional by pairing it with a logical function. By doing so, we alter its state transition function in a way, that it only applies the changes to the state, if its condition is fulfilled (meaning, that the current state is in its truth set), otherwise it acts as an identity function. With mathematical notation, given $\pi : A \to \mathbb{B}$ as a condition and $F : A \to A$ as an assignment, we get the following conditional state transition function:
 
 \begin{equation}
     F'(a) = 
@@ -51,7 +51,7 @@ Such an assignment can be made conditional by pairing it with a logical function
     \right.
 \end{equation}
 
-A parallel program ($S = (s_0, \{s_1, \ldots, s_m\})$) defined using these constructs consists of a single initialization assignment and a set of conditional assignments to be repeatedly performed later in no particular order. Any requirements that would be posed for their sequentiality need to be encoded into their conditions, which in turn can ensure some sort of a control flow. A parallel program constructed in a such a way can be semantically thought of as a relation that maps any state to a branching series of possible successive states (see Figure \ref{fig:branching-execution} as an illustration). If we remove the successively duplicated states from these series by replacing all consecutive repetitions of a single state with only one instance, we get their so-called \textit{reduced} versions. This gives us the type signature $A \times A^{**}$, meaning that for any given state, the program determines the set of possible execution paths, which are either finite (if a program terminates by reaching a fixed point) or infinite (that might represent a continuously running server) series of states.
+A parallel program ($S = (s_0, \{s_1, \ldots, s_m\})$) defined using these constructs consists of a single initialization assignment and a set of conditional assignments to be repeatedly performed later in no particular order. Any requirements that would be posed for their sequentiality need to be encoded into their conditions, which in turn can ensure some sort of a control flow. A parallel program constructed in such a way can be semantically thought of as a relation that maps any state to a branching series of possible successive states (see Figure \ref{fig:branching-execution} as an illustration). If we remove the successively duplicated states from these series by replacing all consecutive repetitions of a single state with only one instance, we get their so-called \textit{reduced} versions. This gives us the type signature $A \times A^{**}$, meaning that for any given state, the program determines the set of possible execution paths, which are either finite (if a program terminates by reaching a fixed point) or infinite (that might represent a continuously running server) series of states.
 
 \begin{figure}[H]
     \centering
@@ -87,7 +87,7 @@ Let the following specification properties be proposed:
 
 \begin{definition}{Transitive Disjunctive Closure}
 \label{def:transitive-disjunctive-closure}
-The transitive disjunctive closure of a relation $R \subset (A \times A)$, where $\lor : A \to A \to A$ is the binary disjunction operator, is denoted by $R^{tdl} \subset (A \times A)$. It is defined as the minimal relation with the following properties.
+The transitive disjunctive closure of a relation $R \subset (A \times A)$, where $\lor : A \to A \to A$ is given as the binary disjunction operator, is denoted by $R^{tdl} \subset (A \times A)$. It is defined as the minimal relation with the following properties.
 \begin{itemize}
     \item It is a superset of the original relation ($R \subset R^{tdl}$).
     \item Transitivity: For every ($a, b, c \in A$) if $(a, b) \in R^{tdl}$ and $(b, c) \in R^{tdl}$, then $(a, c) \in R^{tdl}$ as well.

@@ -1,6 +1,6 @@
 \section{Proofs}
 
-In the second part of this chapter we will present the proofs we built on top of the previously introduced model. There were two kinds of statements that that we could prove in our system. First, there were general theorems, which are true independently and then there are the correctness properties of certain specific programs.
+In the second part of this chapter we will present the proofs we built on top of the previously introduced model. There are two kinds of statements that we could prove in our system. First, there are general theorems, which are true independently and then there are the correctness properties of certain specific programs.
 % , by which we mean the adherence to their specification.
 
 \subsection{Theorems}
@@ -32,7 +32,7 @@ First we need to introduce the \textit{NonEmpty} property for programs, since th
 
 Notice, that the reflexiveness does not only hold for the \textbf{Inevitable ($\hookrightarrow$)} property, but also for the \textbf{Ensures ($\mapsto$)}, \textbf{Progress ($\rightarrowtail$)} and \textbf{Unless ($\rhd$)}. Since this list is laid out in such a way, that the former elements can always be composed from the latter, we should be able to works our way backwards.
 
-First, the reflexivity of Unless is proven using the eliminator of \bot. (Recall from the Agda introduction part at the end of Chapter \ref{chp:background}, that a negation maps to bottom, so if we have proof for a type, for which we have a negation at the same time, we can construct an element of the empty type, which is impossible.) This is a special function, that helps in the definition of branches that contain contradictions. (See section \ref{code:bottom-eliminator} of Appendix \ref{apx:codes} for its definition.) This is quite easy, since by unfolding the definition of Unless, we get a contradiction among the parameters.
+First, the reflexivity of Unless is proven using the eliminator of $\bot$. (Recall from the Agda introduction part at the end of Chapter \ref{chp:background}, that a negation maps to bottom, so if we have proof for a type, for which we have a negation at the same time, we can construct an impossible element of the empty type.) This is a special function, that helps in the implementation of branches that contain contradictions. (See section \ref{code:bottom-eliminator} of Appendix \ref{apx:codes} for its definition.) This is quite easy, since by unfolding the definition of Unless, we get a contradiction among the parameters.
 
 \begin{code}
     \>[2]\AgdaFunction{▷-Reflexive}\AgdaSpace{}%
@@ -883,7 +883,7 @@ Finally the \texttt{$\rhd$-proof} auxiliary function is used to construct the pr
 
 As a more meaningful proof, we verified that if the program reaches a fixpoint, its results are indeed in order. (Note, that this does not necessarily mean, that it is correct, for that we would also need to prove that all the elements are preserved. That should be doable as well, since the only operation done on the elements is swapping two of them, which does not remove any of them, nor does it add any new ones.)
 
-To express this property we introduced the parametric \verb|Ordered| predicate. Given a number $n$ it generates a predicate that claims that the first $n + 1$ elements of the array found at the first variable of the environment is in ascending order by stating that for each pair the one with the lower index is smaller or equal. Its mathematical notation can be seen in Equation \ref{eq:ordered}, followed by its formalized representation in Agda.
+To express this property we introduced the parametric \verb|Ordered| predicate. Given a number $n$ it generates a predicate that claims that the first $n + 1$ elements of the array found at the first variable of the environment are in ascending order by stating that for each pair the one with the lower index is smaller or equal. Its mathematical notation can be seen in Equation \ref{eq:ordered}, followed by its formalized representation in Agda.
 
 \begin{equation}
   \label{eq:ordered}
@@ -948,7 +948,7 @@ Using that, the statement we would like to prove can be expressed as seen in Equ
 \end{equation}
 
 We first introduce a lemma with the following claim. If the value of an element in the array stays the same after swapping it with the following element, their values must be equal.
-This can be proven by pattern matching on the values that introduce branching in the underlying semantics, eliminating (or when possible, omitting) the impossible or conflicting brances and through this process coming to the conclusion that our initial hypothesis is essentially equivalent to our goal.
+This can be proven by pattern matching on the values that introduce branching in the underlying semantics, eliminating (or when possible, omitting) the impossible or conflicting branches and through this process coming to the conclusion that our initial hypothesis is essentially equivalent to our goal.
 
 \begin{code}
     \>[0]\AgdaFunction{rp-h4}\AgdaSpace{}%
@@ -1111,9 +1111,9 @@ Our next lemma transforms the results from the previous one using a congruence o
     \AgdaBound{eq}\AgdaSymbol{)}\<%
 \end{code}
 
-It keeps the same outcome, but now it implies it from the hypothesis, which claims that in a certain state the instructions make no changes. This directly leads into the proof for the correct order of a single pair, which can be constructed with the help of an auxiliary function (\verb|cb-helper|, see Section \ref{code:ci-helper} for definition), that extracts information from the fact that the execution of a conditional batch does not alter a state. This can either happen, because the necessary predicate is not satisfied, or because the batch of instructions does not result in a change of any values.
+It keeps the same outcome, but now it implies it from the hypothesis, which claims that in a certain state the instructions make no changes. This directly leads into the proof for the correct order of a single pair, which can be constructed with the help of an auxiliary function (\verb|cb-helper|, see Section \ref{code:ci-helper} for definition), that extracts information from the fact that the execution of a conditional batch does not alter a state. This can either happen because the necessary predicate is not satisfied, or because the batch of instructions does not result in a change of any values.
 
-If we divide the proof into these two cases, we can see, that if the condition requiring the greate than relation ($a[n] > a[n + 1]$) was not true, then the opposite, a less than or equal relation ($a[n] \leq a[n + 1]$) must hold. (We can deduce this conclusion with the help of a function from the Agda Standard Library\cite{agda-stdlib}, which provides several lemmas for mathematical properties of natural numbers.) On the other hand, if the batch gets executed and the values remain the same, we can use our previously defined lemma to determine that they must be equal ($a[n] = a[n + 1]$), which in turn again implies the sought less than or equal ($a[n] \leq a[n + 1]$) relation. (Again with the help of a lemma from the standard library.)
+If we divide the proof into these two cases, we can see, that if the condition requiring the greater than relation ($a[n] > a[n + 1]$) was not true, then the opposite, a less than or equal relation ($a[n] \leq a[n + 1]$) must hold. (We can deduce this conclusion with the help of a function from the Agda Standard Library\cite{agda-stdlib}, which provides several lemmas for mathematical properties of natural numbers.) On the other hand, if the batch gets executed and the values remain the same, we can use our previously defined lemma to determine that they must be equal ($a[n] = a[n + 1]$), which in turn again implies the sought less than or equal ($a[n] \leq a[n + 1]$) relation. (Again with the help of a lemma from the standard library.)
 
 \begin{code}
     \>[0]\AgdaFunction{resultProof}\AgdaSpace{}%
