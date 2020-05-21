@@ -30,7 +30,7 @@ First we need to introduce the \textit{NonEmpty} property for programs, since th
     \AgdaInductiveConstructor{[]}\AgdaSymbol{)}\<%
 \end{code}
 
-Notice, that the reflexiveness does not only hold for the \textbf{Inevitable ($\hookrightarrow$)} property, but also for the \textbf{Ensures ($\mapsto$)}, \textbf{Progress ($\rightarrowtail$)} and \textbf{Unless ($\rhd$)}. Since this list is laid out in such a way, that the former elements can always be composed from the latter, we should be able to works our way backwards.
+Notice, that the reflexiveness does not only hold for the \textbf{Inevitable ($\hookrightarrow$)} property, but also for the \textbf{Ensures ($\mapsto$)}, \textbf{Progress ($\rightarrowtail$)} and \textbf{Unless ($\rhd$)}. Since this list is laid out in such a way, that the former elements can always be composed from the latter, we should be able to work our way backwards.
 
 First, the reflexivity of Unless is proven using the eliminator of $\bot$. (Recall from the Agda introduction part at the end of Chapter \ref{chp:background}, that a negation maps to bottom, so if we have proof for a type, for which we have a negation at the same time, we can construct an impossible element of the empty type.) This is a special function, that helps in the implementation of branches that contain contradictions. (See section \ref{code:bottom-eliminator} of Appendix \ref{apx:codes} for its definition.) This is quite easy, since by unfolding the definition of Unless, we get a contradiction among the parameters.
 
@@ -149,7 +149,7 @@ Now, that we have the reflexivity of Ensures, our goal can be directly achieved 
     
 \subsubsection{PSP}
 
-Our second example is the most complicated theorem we managed to prove. It was the theorem of "PSP" (see equation \ref{eq:psp}), meaning "Progress-Safety-Progress" (introduced in this form in \cite{Chandy1988ParallelPD}), which states that if from a set of starting points $P$ a program must eventually reach a set of result states $Q$ and the truth set of a given predicate $R$ cannot be left without entering $B$ than in case we begin execution from a shared point of $P$ and $R$ we will either get to a result ($Q$) while staying in $R$ or enter an error state, $B$. We prove several other helpful lemmas first, that facilitated the construction of the bigger proof later.
+Our second example is the most complicated theorem we managed to prove. It was the theorem of "PSP" (see equation \ref{eq:psp}), meaning "Progress-Safety-Progress" (introduced in this form in \cite{Chandy1988ParallelPD}), which states that if from a set of starting points $P$ a program must eventually reach a set of result states $Q$ and the truth set of a given predicate $R$ cannot be left without entering $B$ then in case we begin execution from a shared point of $P$ and $R$ we will either get to a result ($Q$) while staying in $R$ or enter an error state, $B$. We prove several other helpful lemmas first, that facilitated the construction of the bigger proof later.
 
 \begin{equation}
     \label{eq:psp}
@@ -160,7 +160,7 @@ Our second example is the most complicated theorem we managed to prove. It was t
 
 For the construction of this proof we used structural induction. We divided the goal into three parts based on how $P \hookrightarrow_S Q$ was constructed (from an Ensures statement or by one of the transitivity and distributivity rules).
 
-The first goal is then solved by proving that equation \ref{eq:psp-ensures} holds and then reconstructing the goal by using the \verb|FromEnsures| constructor on the results of the lemma. The proof for the lemma can be seen in Section \ref{code:from-ensures} of Appendix \ref{apx:codes}, it is constructed from two inductive parts, on for each of the Unless and the Progress statements that Ensures is made up of. They also use results of previously defined lemmas, the full source code for those is available at our repository\cite{orsi-formalization-github}.
+The first goal is then solved by proving that equation \ref{eq:psp-ensures} holds and then reconstructing the goal by using the \verb|FromEnsures| constructor on the results of the lemma. The proof for the lemma can be seen in Section \ref{code:from-ensures} of Appendix \ref{apx:codes}, it is constructed from two inductive parts, one for each of the Unless and the Progress statements that Ensures is made up of. They also use results of previously defined lemmas, the full source code for those is available at our repository\cite{orsi-formalization-github}.
 
 \begin{equation}
     \label{eq:psp-ensures}
@@ -303,7 +303,7 @@ Another proof we created is regarding the \textbf{Unless} safety property of the
 
 This equality can be represented in Agda by proving the logical equivalence of two types. One representing the statement $P \rhd_{S_{1} \cup S_{2}} Q$ and the other claiming that $(P \rhd_{S_{1}} Q) \land (P \rhd_{S_{2}} Q)$. This logical equalence can be proven by giving two functions that represent the mapping between the two types in each direction.
 
-First we show that the conjunction of the two statements in the individual programs imply the relation for their union. This is done by pattern matching on the first program. If the first program ($S_{1}$) is empty, we can simply just return the proof of the second one ($\rhd_{S_{2}}$), if it is not, then we need to recursively reconstruct the proofs for the elements of it to be appended to the proofs for the second program. This can be achieved by gaining the parameters ($p , \neg q$) from the definition of the \textbf{Unless} relation of the union and passing them on to the proof function of the first program ($\rhd_{S_{1}}$) that we also received as an argument.
+First we show that the conjunction of the two statements in the individual programs implies the relation for their union. This is done by pattern matching on the first program. If the first program ($S_{1}$) is empty, we can simply just return the proof of the second one ($\rhd_{S_{2}}$), if it is not, then we need to recursively reconstruct the proofs for the elements of it to be appended to the proofs for the second program. This can be achieved by gaining the parameters ($p , \neg q$) from the definition of the \textbf{Unless} relation of the union and passing them on to the proof function of the first program ($\rhd_{S_{1}}$) that we also received as an argument.
 
 \begin{code}
     \>[2]\AgdaFunction{▷-Union-to}\AgdaSpace{}%

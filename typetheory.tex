@@ -9,7 +9,7 @@ This is due to the so called \textit{"propositions-as-types"} paradigm, formally
 As an example, given two statements, $A$ and $B$, the function with the type signature $A \to B$ represents the theorem which claims that every proof of $A$ can be mapped to a proof for $B$, thus $A$ ensures $B$. If an implementation for a function with said type is given, the theorem can be considered the be proven, since if we are in possession of a proof for $A$, we can execute it and obtain a proof for $B$. The fact that it does not only claim, that such an instance exists, but gives one right away instead is called a constructive proof.
 
 \subsection{Implementations}
-There are several existing programming languages that implement type theories, thus are capable of describing theorems and constructing proofs for them. They achieve this using dependent typesystems, in which types can not only be parametrized over other types, but also values. Out of these we tried out the three most popular alternatives.
+There are several existing programming languages that implement type theories, thus are capable of describing theorems and constructing proofs for them. They achieve this using dependent typesystems, in which types can not only be parametrized over other types, but also values. Out of these we tried the three most popular alternatives.
 
 \subsubsection{Idris}
 Idris\cite{Brady2013IdrisAG} is a relatively new contender in the field of programming with dependent types. Its development is led by Edwin Brady with the aim of creating a general purpose language.
@@ -260,7 +260,7 @@ We also show the implementations with some examples for a few of the usual logic
     \AgdaBound{B}\<%
 \end{code}
 
-To define negation, we first need the introduce the empty type, which essentially represents a false statement, by having no constructors, thus no means, by which an instance could be constructed for it. Afterwards we can represent negation as a function that maps to the empty type from a certain other type, since by constructing an instance for such a function we can show that the type given as parameter must be empty as well. This is due to the fact that if there existed an instance for that type, we could create an element for the empty type by applying this function to it, which we know is impossible, since by definition no instance exists for the empty type.
+To define negation, we first need to introduce the empty type, which essentially represents a false statement, by having no constructors, thus no means, by which an instance could be constructed for it. Afterwards we can represent negation as a function that maps to the empty type from a certain other type, since by constructing an instance for such a function we can show that the type given as parameter must be empty as well. This is due to the fact that if there existed an instance for that type, we could create an element for the empty type by applying this function to it, which we know is impossible, since by definition no instance exists for the empty type.
 
 \begin{code}
     \>[0]\AgdaKeyword{data}\AgdaSpace{}%

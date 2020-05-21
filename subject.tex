@@ -3,7 +3,7 @@
 
 The subject of our formalization is a part of the material from the \textit{Specification and Implementation of Distributed System} course taught at ELTE. The main goal was following the official notes of the subject\cite{hz-orsi} as closely as possible, but since the code needed to be more precise than written definitions, some constructs were altered. The system extends a relational model defined in \cite{fothi-prog} which itself is built upon Hoare-logic \cite{hoare1978proof}\cite{hoare-logic}, more specifically concurrent Hoare-logic\cite{Lamport1980}. Proofs for sequential programs are handled using pre- and postconditions with the devices provided by first order logic. This is expanded to parallel execution in a similar fashion to UNITY. Abstract programs are formalized through a set of conditional assignments the execution of which are represented as a list of state transitions that can be considered as trees, which results in a branching-time temporal logic \cite{emerson1988branching} (more specifically computation tree logic) like system.
 
-An abstract program as defined by this system can be thought of as an initialization and a set of further conditional instructions. These are then selected randomly and if their condition is satisfied in the current program state, they are executed. This can be done in any arbitrary order, their behaviour stays the same if the scheduling is impartial. The execution units running such a program can be thought of as processing cores, or even several computers working together in a cluster.
+An abstract program as defined by this system can be thought of as an initialization and a set of further conditional instructions. These are then selected randomly and if their condition is satisfied in the current program state, they are executed. This can be done in any arbitrary order, their behavior stays the same if the scheduling is impartial. The execution units running such a program can be thought of as processing cores, or even several computers working together in a cluster.
 
 \begin{definition}{Interleaving semantics}
 \label{def:interleaving-semantics}
@@ -34,7 +34,7 @@ The subset of the state space in which these conditions are satisfied is often o
 
 \begin{definition}{Implication}
 \label{def:implication}
-One condition is said to imply another ($P \Rightarrow Q$) if its truth set is subset of the others ($\lceil P \rceil \subset \lceil Q \rceil$).
+One condition is said to imply another ($P \Rightarrow Q$) if its truth set is subset of the other's ($\lceil P \rceil \subset \lceil Q \rceil$).
 \end{definition}
 
 Another specific kind of function that operates on states is the so called \textbf{state transition function}. It has the type signature of $A \to A$ and is used to describe the behavior of an instruction. In this model, we consider only a single kind of instruction, namely a generic type of assignment, which is defined in the following way. Given a function for every variable index of the state space, that maps from the entire state space to the type value set of that given variable ($\forall i \in \{1..n\} : F_i : A \to A_i$), combining these into a single function $F = (F_1, \ldots F_n)$ we get a state transition function. Semantically speaking, it describes a parallel assignment, where each variable can have a formula, that may depend on all the other variables (or itself as well), these then are evaluated in the same state and get their new values assigned concurrently to produce a new, updated state.

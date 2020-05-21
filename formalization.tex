@@ -683,7 +683,7 @@ Similarly, there are also operators for handling instructions.
         \AgdaFunction{State}\<%
     \end{code}
     
-    \item $\sem{\_}{i}$ and $\sem{\_}{il}$ - The usage of the previous operators are made easier by defining $\sem{\_}{i}$ and $\sem{\_}{il}$, each having one less parameter. They call their respective more general versions by taking the argument they received and passing if forward twice.
+    \item $\sem{\_}{i}$ and $\sem{\_}{il}$ - The usage of the previous operators is made easier by defining $\sem{\_}{i}$ and $\sem{\_}{il}$, each having one less parameter. They call their respective more general versions by taking the argument they received and passing if forward twice.
     (The $\sem{\_}{il}$ operator essentially turns a list of instructions into a single deterministic state transition function, that is analogue to a simplification of what the original model describes.)
     
     % We also define an additional operator which turns instructions into functions that map from states to states.
@@ -1365,7 +1365,7 @@ To express relationships between predicates we create an operator that describes
     \AgdaBound{Q}\AgdaSymbol{)}\<%
 \end{code}
 
-We can define the same relation for assertions in a similar way. Notice, that these definitions are essentially equivalent, the proof of their equality can be constructed trivially using the identity function, since they normalize to the same expressions, but some conversions between predicates and assertions can be avoided by introducing them separately.
+We can define the same relation for assertions in a similar way. Notice, that these definitions are essentially equivalent, the proof of their equivalence can be constructed trivially using the identity function, since they normalize to the same expressions, but some conversions between predicates and assertions can be avoided by introducing them separately.
 
 \begin{code}
     \>[2]\AgdaKeyword{infix}\AgdaSpace{}%
@@ -2001,7 +2001,7 @@ This statement is special in the sense, that it is defined with its own inductiv
         \infer{P \hookrightarrow_S R}{P \hookrightarrow_S Q & Q \hookrightarrow_S R}
     \end{equation}
 
-    \item Or they can be the result of a conjunciton.
+    \item Or they can be the result of a conjunction.
     \begin{equation}
         \label{eq:leadsto-disjunctivity}
         \infer{P \lor Q \hookrightarrow_S R}{P \hookrightarrow_S R & Q \hookrightarrow_S R}
