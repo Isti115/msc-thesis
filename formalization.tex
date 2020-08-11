@@ -765,6 +765,13 @@ While these would already be sufficient, a few more type aliases were also creat
         \AgdaSymbol{=}\AgdaSpace{}%
         \AgdaDatatype{List}\AgdaSpace{}%
         \AgdaFunction{ConditionalBatch}\<%
+        \\
+        %
+        \>[2]\AgdaFunction{ConditionalBatch}\AgdaSpace{}%
+        \AgdaSymbol{=}\AgdaSpace{}%
+        \AgdaSymbol{(}\AgdaDatatype{Predicate}\AgdaSpace{}%
+        \AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+        \AgdaFunction{Batch}\AgdaSymbol{)}\<%
     \end{code}
     
     \item \verb|InitializedProgram| - A \verb|ParallelProgram| extended with a special batch of instructions to be performed at the beginning of the execution.
