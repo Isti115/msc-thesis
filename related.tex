@@ -17,6 +17,8 @@ A case study\cite{coq-concurrent-verification-case-study} shows that there are m
 \cite{sangiorgi2003pi}
 (which has been modified to enable the usage of Coq datatypes and control structures), a specification language and a collection of reusable lemmas. In this sense, it is similar to our approach, as these mentioned components are also present among our results. Models formalized in their library are also suitable for extraction into executable OCaml code using the facilities provided by Coq, although it is not fully automatic and requires manual modifications.
 
+Another paper based in Coq \cite{Heyd1996AMC} is closely related to our work in the sense, that it takes the UNITY theoretical programming language as its subject of formalization, the same system on top of which the material of the course discussed later is based on. Their approach is much more abstract, as they are only constraining elements to functions between certain types, not limiting them to be created by an established set of constructors. Also, they do not discuss conditions at all. Compared to this, while being less general, our results are much more approachable, since they are built using inductive types that not only give constructing blocks for programs and predicates, but also serve as stricter and stronger guiding outlines to aid the development of proofs about the system.
+
 \section{Our work}
 Our approach is different from these examples in that its main goal is to aid the development of solutions given through the formalized specification language, not necessarily the verification of already existing codebases. The control flow (or more like the lack thereof) is also a big differentiation factor of our model when comparing to other similar systems.
 
